@@ -39,3 +39,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Large Flyway files (too big for GitHub)
+flyway-commandline-*.tar.gz
+flyway-*/
