@@ -30,7 +30,7 @@ jobs:
     - name: Install Databricks CLI
       run: |
         echo "Installing Databricks CLI via official script..."
-        curl -fsSL https://databricks.com/cli/latest/install.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
         echo "Databricks CLI installed successfully"
     
     - name: Configure Databricks CLI
