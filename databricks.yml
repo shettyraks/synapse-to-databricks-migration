@@ -2,11 +2,11 @@
 bundle:
   name: synapse-to-databricks-migration
   git:
-    origin_url: https://github.com/your-org/synapse-to-databricks-migration.git
-    branch: main
+    origin_url: https://github.com/shettyraks/synapse-to-databricks-migration.git
+    branch: develop
 
 workspace:
-  root_path: /Workspace/Shared/synapse-migration
+  root_path: /Workspace/rio/synapse-migration
 
 variables:
   environment:
