@@ -99,9 +99,15 @@ ls -la
 
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
+    echo "Current directory: $(pwd)"
+    echo "Changing to: ./src/$domain/sql_deployment"
     cd ./src/$domain/sql_deployment
-    # Run Flyway migrate
-    flyway -configFiles=../../../flyway.conf migrate
+    echo "After cd, current directory: $(pwd)"
+    echo "Contents of sql_deployment directory:"
+    ls -la
+    echo "Running Flyway migrate..."
+    # Run Flyway migrate with Java memory flags for Databricks JDBC
+    JAVA_OPTS="--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED" flyway -configFiles=../../../flyway.conf migrate
     
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
