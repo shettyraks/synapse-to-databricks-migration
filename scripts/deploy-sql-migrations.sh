@@ -106,11 +106,20 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     ls -la
     echo "Running Flyway migrate..."
     
+    # Debug: List all JAR files to help identify the correct one
+    echo "Debug - Available JAR files:"
+    find . -name "*.jar" 2>/dev/null | head -10 || echo "No JAR files found"
+    
     # Find the Flyway JAR file and run it directly with Java memory flags
-    FLYWAY_JAR=$(find /usr/local/bin -name "flyway*.jar" 2>/dev/null | head -1)
+    # Look for the main Flyway JAR (not database-specific ones)
+    FLYWAY_JAR=$(find /usr/local/bin -name "flyway-commandline*.jar" 2>/dev/null | head -1)
     if [ -z "$FLYWAY_JAR" ]; then
-        # Try to find it in the extracted directory
-        FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | head -1)
+        # Try to find it in the extracted directory - look for main flyway JAR
+        FLYWAY_JAR=$(find . -name "flyway-commandline*.jar" 2>/dev/null | head -1)
+    fi
+    if [ -z "$FLYWAY_JAR" ]; then
+        # Fallback: look for any flyway JAR but exclude database-specific ones
+        FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | grep -v "flyway-database-" | grep -v "flyway-sql" | head -1)
     fi
     
     if [ -n "$FLYWAY_JAR" ]; then
