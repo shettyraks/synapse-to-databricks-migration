@@ -16,7 +16,7 @@ echo "Deploying SQL migrations to $ENVIRONMENT environment..."
 
 # Debug: Print environment variables
 echo "Debug - Environment variables:"
-echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST_DEV}"
+echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST}"
 echo "HTTP_PATH_DEV: ${HTTP_PATH_DEV}"
 echo "USER_DEV: ${USER_DEV}"
 echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
@@ -24,7 +24,7 @@ echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
 # Set environment-specific variables
 case $ENVIRONMENT in
     dev)
-        DATABRICKS_HOST=${DATABRICKS_HOST_DEV}
+        DATABRICKS_HOST=${DATABRICKS_HOST}
         HTTP_PATH=${HTTP_PATH_DEV:-"/sql/1.0/warehouses/8b5728cafe72b647"}
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
