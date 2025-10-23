@@ -105,10 +105,22 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Contents of sql_deployment directory:"
     ls -la
     echo "Running Flyway migrate..."
+    
     # Find the Flyway JAR file and run it directly with Java memory flags
-   
-    echo "Direct flyway command..."
-    flyway -configFiles=flyway.conf migrate
+    FLYWAY_JAR=$(find /usr/local/bin -name "flyway*.jar" 2>/dev/null | head -1)
+    if [ -z "$FLYWAY_JAR" ]; then
+        # Try to find it in the extracted directory
+        FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | head -1)
+    fi
+    
+    if [ -n "$FLYWAY_JAR" ]; then
+        echo "Found Flyway JAR: $FLYWAY_JAR"
+        echo "Running Flyway with Java memory flags..."
+        java --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED -jar "$FLYWAY_JAR" -configFiles=flyway.conf migrate
+    else
+        echo "Flyway JAR not found, trying direct flyway command..."
+        flyway -configFiles=flyway.conf migrate
+    fi
     
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
