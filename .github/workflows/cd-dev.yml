@@ -27,6 +27,13 @@ jobs:
         pip install -r requirements.txt
         echo "Python dependencies installed successfully"
     
+    - name: Install Databricks CLI
+      run: |
+        echo "Installing Databricks CLI via Homebrew..."
+        brew tap databricks/tap
+        brew install databricks
+        echo "Databricks CLI installed successfully"
+    
     - name: Configure Databricks CLI
       run: |
         echo "Configuring Databricks CLI with environment variables..."
