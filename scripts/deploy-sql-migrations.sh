@@ -96,7 +96,7 @@ cat flyway.conf
 pwd
 ls -la
 
-cd  flyway
+cd  flyway-11.14.1
 echo "Current directory: $(pwd)"
 echo "Contents of flyway directory:"
 ls -la
