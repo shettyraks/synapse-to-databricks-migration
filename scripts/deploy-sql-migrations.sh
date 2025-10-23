@@ -96,6 +96,7 @@ cat flyway.conf
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     cd src/$domain/sql_deployment
+    pwd
     
     # Run Flyway migrate
     flyway -configFiles=../../../flyway.conf migrate

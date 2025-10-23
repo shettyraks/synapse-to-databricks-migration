@@ -88,7 +88,7 @@ jobs:
         echo "Downloading Flyway ${FLYWAY_VERSION}..."
         
         # Try downloading with verbose output for debugging
-        if wget -v "https://github.com/flyway/flyway/releases/download/flyway-${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"; then
+        if wget -q "https://github.com/flyway/flyway/releases/download/flyway-${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"; then
           echo "Flyway download completed"
         else
           echo "Primary download failed, trying alternative URL..."
