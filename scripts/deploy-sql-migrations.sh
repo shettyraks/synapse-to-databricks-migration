@@ -14,6 +14,13 @@ fi
 
 echo "Deploying SQL migrations to $ENVIRONMENT environment..."
 
+# Debug: Print environment variables
+echo "Debug - Environment variables:"
+echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST_DEV}"
+echo "HTTP_PATH_DEV: ${HTTP_PATH_DEV}"
+echo "USER_DEV: ${USER_DEV}"
+echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
+
 # Set environment-specific variables
 case $ENVIRONMENT in
     dev)
@@ -72,6 +79,10 @@ flyway.outOfOrder=false
 flyway.cleanDisabled=true
 flyway.driverJarFiles=databricks-jdbc-driver.jar
 FLYWAY_EOF
+
+# Debug: Print the generated flyway.conf
+echo "Debug - Generated flyway.conf:"
+cat flyway.conf
 
 # Run Flyway migrations for each domain
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
