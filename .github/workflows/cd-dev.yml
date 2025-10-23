@@ -63,7 +63,7 @@ jobs:
         sudo apt-get install -y openjdk-11-jdk
         
         # Download Flyway from a reliable source
-        FLYWAY_VERSION="9.22.3"
+        FLYWAY_VERSION="11.14.1"
         wget -q "https://github.com/flyway/flyway/releases/download/${FLYWAY_VERSION}/flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
         
         # Verify the download
