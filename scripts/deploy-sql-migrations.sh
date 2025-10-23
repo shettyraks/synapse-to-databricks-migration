@@ -2,6 +2,7 @@
 
 # Deploy SQL Migrations using Flyway
 # Usage: ./scripts/deploy-sql-migrations.sh <environment>
+# Trigger workflow run
 
 set -e
 
@@ -74,7 +75,7 @@ fi
 
 
 cat > flyway.conf << FLYWAY_EOF
-flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=default
+flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=default
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.user=token
 flyway.password=${PASSWORD}
