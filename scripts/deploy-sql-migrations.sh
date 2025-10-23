@@ -96,6 +96,10 @@ cat flyway.conf
 pwd
 ls -la
 
+cd  flyway
+echo "Current directory: $(pwd)"
+echo "Contents of flyway directory:"
+ls -la
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     echo "Current directory: $(pwd)"
