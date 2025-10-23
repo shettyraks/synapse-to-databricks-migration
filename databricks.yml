@@ -16,7 +16,7 @@ variables:
   schema_prefix:
     description: "Schema prefix for environment"
 
-includes: 
+include: 
   - src/Inventory/jobs/inventory_job.yml
   # Job configurations are now defined in domain-specific files
   # See src/*/jobs.yml for individual job definitions
