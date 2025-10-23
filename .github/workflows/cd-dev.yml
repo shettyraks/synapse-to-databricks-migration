@@ -22,7 +22,11 @@ jobs:
         python-version: '3.8'
     
     - name: Install Databricks CLI
-      run: pip install databricks-cli
+      run: |
+        echo "Installing Databricks CLI via Homebrew..."
+        brew tap databricks/tap
+        brew install databricks
+        echo "Databricks CLI installed successfully"
     
     - name: Configure Databricks CLI
       run: |
