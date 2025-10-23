@@ -1,0 +1,59 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: prod
+
+jobs:
+  deploy-to-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    
+    - name: Install Databricks CLI
+      run: pip install databricks-cli
+    
+    - name: Configure Databricks CLI
+      run: |
+        echo "${{ secrets.DATABRICKS_HOST_PROD }}" | databricks configure --token
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+    
+    - name: Create Backup
+      run: |
+        python scripts/create_backup.py --environment prod
+    
+    - name: Deploy Databricks Assets
+      run: |
+        databricks bundle deploy --target prod
+    
+    - name: Run SQL Migrations
+      run: |
+        ./scripts/deploy-sql-migrations.sh prod
+    
+    - name: Validate Deployment
+      run: |
+        python scripts/validate_deployment.py --environment prod
+    
+    - name: Run Smoke Tests
+      run: |
+        python scripts/run_smoke_tests.py --environment prod
+    
+    - name: Notify Production Deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#databricks-prod'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow

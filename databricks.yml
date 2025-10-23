@@ -1,0 +1,46 @@
+# Databricks Asset Bundle Configuration
+bundle:
+  name: synapse-to-databricks-migration
+  git:
+    origin_url: https://github.com/your-org/synapse-to-databricks-migration.git
+    branch: main
+
+workspace:
+  root_path: /Workspace/Shared/synapse-migration
+
+resources:
+  # Job configurations are now defined in domain-specific files
+  # See src/*/jobs/*.yml for individual job definitions
+
+targets:
+  dev:
+    workspace:
+      host: ${var.databricks_host_dev}
+    variables:
+      environment: "dev"
+      catalog: "main"
+      schema_prefix: "dev_"
+      
+  sit:
+    workspace:
+      host: ${var.databricks_host_sit}
+    variables:
+      environment: "sit"
+      catalog: "main"
+      schema_prefix: "sit_"
+      
+  uat:
+    workspace:
+      host: ${var.databricks_host_uat}
+    variables:
+      environment: "uat"
+      catalog: "main"
+      schema_prefix: "uat_"
+      
+  prod:
+    workspace:
+      host: ${var.databricks_host_prod}
+    variables:
+      environment: "prod"
+      catalog: "main"
+      schema_prefix: ""

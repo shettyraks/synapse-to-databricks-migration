@@ -1,0 +1,41 @@
+# Git ignore file for Synapse to Databricks migration
+
+# Environment files with sensitive data
+local.env
+.env
+*.env.local
+
+# Temporary Flyway configuration files
+flyway_local_*.conf
+flyway.conf
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Databricks CLI cache
+.databricks/
+
+# Temporary files
+*.tmp
+*.temp
