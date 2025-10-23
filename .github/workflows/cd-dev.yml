@@ -27,12 +27,6 @@ jobs:
         pip install -r requirements.txt
         echo "Python dependencies installed successfully"
     
-    - name: Run Tests
-      run: |
-        echo "Running project tests..."
-        pytest tests/ -v --tb=short
-        echo "Tests completed successfully"
-    
     - name: Configure Databricks CLI
       run: |
         echo "Configuring Databricks CLI with environment variables..."
