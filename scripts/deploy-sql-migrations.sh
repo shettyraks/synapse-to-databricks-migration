@@ -72,9 +72,9 @@ if [ ! -f "databricks-jdbc-driver.jar" ]; then
     echo "Databricks JDBC driver downloaded"
 fi
 
-# Create environment-specific flyway config
+
 cat > flyway.conf << FLYWAY_EOF
-flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443/default;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD}
+flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=default
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.user=token
 flyway.password=${PASSWORD}
