@@ -85,7 +85,21 @@ jobs:
         
         # Download Flyway from a reliable source
         FLYWAY_VERSION="11.14.1"
-        wget -q "https://github.com/flyway/flyway/releases/download/${FLYWAY_VERSION}/flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
+        echo "Downloading Flyway ${FLYWAY_VERSION}..."
+        
+        # Try downloading with verbose output for debugging
+        if wget -v "https://github.com/flyway/flyway/releases/download/${FLYWAY_VERSION}/flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"; then
+          echo "Flyway download completed"
+        else
+          echo "Primary download failed, trying alternative URL..."
+          # Try alternative download method
+          curl -L -o "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" "https://github.com/flyway/flyway/releases/download/${FLYWAY_VERSION}/flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
+        fi
+        
+        # Check what we actually downloaded
+        echo "Checking downloaded file..."
+        ls -la "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File not found"
+        file "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File type check failed"
         
         # Verify the download
         if [ -f "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" ] && [ $(stat -c%s "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz") -gt 1000000 ]; then
@@ -94,6 +108,9 @@ jobs:
           sudo ln -s "$(pwd)/flyway-${FLYWAY_VERSION}/flyway" /usr/local/bin/flyway
           rm "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
           echo "Flyway installed successfully"
+          
+          # Verify Flyway installation
+          flyway --version || echo "Flyway verification failed"
         else
           echo "Download failed or file too small, trying alternative..."
           # Alternative: Install via package manager if available
