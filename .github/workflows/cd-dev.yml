@@ -114,7 +114,23 @@ jobs:
         else
           echo "Download failed or file too small, trying alternative..."
           # Alternative: Install via package manager if available
-          sudo apt-get install -y flyway || echo "Package manager installation failed, continuing without Flyway"
+          if sudo apt-get install -y flyway; then
+            echo "Flyway installed via package manager"
+          else
+            echo "❌ CRITICAL: Flyway installation failed completely"
+            echo "Cannot proceed without Flyway for SQL migrations"
+            exit 1
+          fi
+        fi
+        
+        # Final verification that Flyway is working
+        echo "Final Flyway verification..."
+        if flyway --version; then
+          echo "✅ Flyway is ready for SQL migrations"
+        else
+          echo "❌ CRITICAL: Flyway verification failed"
+          echo "Flyway command not working properly"
+          exit 1
         fi
     
     - name: Run SQL Migrations
