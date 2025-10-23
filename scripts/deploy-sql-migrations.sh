@@ -143,17 +143,10 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
         done
     fi
     
-    if [ -n "$FLYWAY_JAR" ]; then
-        echo "Found Flyway JAR: $FLYWAY_JAR"
-        echo "Running Flyway with Java memory flags..."
-        # Use JAVA_OPTS if available, otherwise use default memory flags
-        JAVA_MEMORY_FLAGS="${JAVA_OPTS:---add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED}"
-        echo "Using Java memory flags: $JAVA_MEMORY_FLAGS"
-        java $JAVA_MEMORY_FLAGS -jar "$FLYWAY_JAR" -configFiles=flyway.conf migrate
-    else
-        echo "Flyway JAR not found, trying direct flyway command..."
-        flyway -configFiles=flyway.conf migrate
-    fi
+    
+    echo "Flyway JAR not found, trying direct flyway command..."
+    flyway -configFiles=flyway.conf migrate
+    
     
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
