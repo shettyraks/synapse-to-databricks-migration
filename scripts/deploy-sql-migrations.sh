@@ -79,6 +79,7 @@ fi
 cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=main
 flyway.driver=com.databricks.client.jdbc.Driver
+flyway.locations=filesystem:./src/Inventory/sql_deployment
 flyway.schemas=${SCHEMA_NAME}
 flyway.defaultSchema=${SCHEMA_NAME}
 flyway.baselineOnMigrate=true
@@ -99,7 +100,7 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     echo "Current directory: $(pwd)"
     echo "Changing to: ./src/$domain/sql_deployment"
-    cd ./src/$domain/sql_deployment
+    #cd ./src/$domain/sql_deployment
     echo "After cd, current directory: $(pwd)"
     echo "Contents of sql_deployment directory:"
     ls -la
@@ -116,7 +117,7 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
         java --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED -jar "$FLYWAY_JAR" -configFiles=../../../flyway.conf migrate
     else
         echo "Flyway JAR not found, trying direct flyway command..."
-        flyway -configFiles=../../../flyway.conf migrate
+        flyway -configFiles=flyway.conf migrate
     fi
     
     if [ $? -eq 0 ]; then
