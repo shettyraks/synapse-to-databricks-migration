@@ -110,7 +110,6 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Direct flyway command..."
     flyway -configFiles=flyway.conf migrate
     
-    
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
     else
