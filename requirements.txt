@@ -1,0 +1,20 @@
+# Databricks Migration Project Dependencies
+# Core Databricks SDK
+databricks-sdk>=0.18.0
+
+# Testing Framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Additional Testing Utilities
+pytest-mock>=3.10.0
+
+# Code Quality Tools
+black>=23.0.0
+flake8>=6.0.0
+
+# YAML Processing
+PyYAML>=6.0
+
+# Optional: For notebook validation (if needed)
+# nbformat>=5.7.0

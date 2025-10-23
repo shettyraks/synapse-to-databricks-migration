@@ -21,12 +21,17 @@ jobs:
       with:
         python-version: '3.8'
     
-    - name: Install Databricks CLI
+    - name: Install Python Dependencies
       run: |
-        echo "Installing Databricks CLI via Homebrew..."
-        brew tap databricks/tap
-        brew install databricks
-        echo "Databricks CLI installed successfully"
+        echo "Installing Python dependencies from requirements.txt..."
+        pip install -r requirements.txt
+        echo "Python dependencies installed successfully"
+    
+    - name: Run Tests
+      run: |
+        echo "Running project tests..."
+        pytest tests/ -v --tb=short
+        echo "Tests completed successfully"
     
     - name: Configure Databricks CLI
       run: |
