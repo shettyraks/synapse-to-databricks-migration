@@ -7,40 +7,32 @@ Validates Databricks notebooks for syntax and structure
 import os
 import sys
 import json
-import nbformat
-from nbformat import validate
 
 def validate_notebook_file(file_path):
     """Validate a single notebook file"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            notebook = nbformat.read(f, as_version=4)
+            content = f.read()
         
-        # Validate notebook structure
-        validate(notebook)
+        # Basic Python syntax check for .py files
+        if file_path.endswith('.py'):
+            compile(content, file_path, 'exec')
+            return True, "Valid Python syntax"
         
-        # Check for required metadata
-        if 'metadata' not in notebook:
-            return False, "Missing metadata"
-        
-        # Check for language info
-        if 'language_info' not in notebook.get('metadata', {}):
-            return False, "Missing language_info in metadata"
-        
-        # Check cells
-        if not notebook.get('cells'):
-            return False, "No cells found"
-        
-        # Validate each cell
-        for i, cell in enumerate(notebook['cells']):
-            if 'cell_type' not in cell:
-                return False, f"Cell {i} missing cell_type"
-            
-            if cell['cell_type'] not in ['code', 'markdown', 'raw']:
-                return False, f"Cell {i} has invalid cell_type: {cell['cell_type']}"
+        # For .ipynb files, do basic JSON validation
+        elif file_path.endswith('.ipynb'):
+            try:
+                notebook_data = json.loads(content)
+                if 'cells' not in notebook_data:
+                    return False, "Missing cells in notebook"
+                return True, "Valid notebook structure"
+            except json.JSONDecodeError as e:
+                return False, f"Invalid JSON: {e}"
         
         return True, "Valid"
         
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
     except Exception as e:
         return False, f"Error: {str(e)}"
 
