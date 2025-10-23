@@ -63,33 +63,25 @@ jobs:
         echo "Checking for Java installation..."
         
         # Check if Java is already installed
-        # if command -v java &> /dev/null; then
-        #   echo "Java is already installed:"
-        #   java -version
-        # else
-        #   echo "Java not found, installing latest OpenJDK..."
+        if command -v java &> /dev/null; then
+          echo "Java is already installed:"
+          java -version
+        else
+          echo "Java not found, installing latest OpenJDK..."
           
-        #   # Check available OpenJDK versions
-        #   sudo apt-get update
-        #   AVAILABLE_VERSIONS=$(apt-cache search openjdk-.*-jdk | grep -o 'openjdk-[0-9]*-jdk' | sort -V | tail -1)
-        #   echo "Latest available OpenJDK version: $AVAILABLE_VERSIONS"
+          # Check available OpenJDK versions
+          sudo apt-get update
+          AVAILABLE_VERSIONS=$(apt-cache search openjdk-.*-jdk | grep -o 'openjdk-[0-9]*-jdk' | sort -V | tail -1)
+          echo "Latest available OpenJDK version: $AVAILABLE_VERSIONS"
           
-        #   # Install the latest available version
-        #   sudo apt-get install -y $AVAILABLE_VERSIONS || sudo apt-get install -y openjdk-11-jdk
+          # Install the latest available version
+          sudo apt-get install -y $AVAILABLE_VERSIONS || sudo apt-get install -y openjdk-11-jdk
           
-        #   # Verify installed Java version
-        #   echo "Checking installed Java version..."
-        #   java -version
-        #   echo "Java installation completed"
-        # fi
-        # Install the latest available version
-        echo "Installing the latest available version..."
-        sudo apt-get install -y openjdk-11-jdk
-          
-        # Verify installed Java version
-        echo "Checking installed Java version..."
-        java -version
-        echo "Java installation completed"
+          # Verify installed Java version
+          echo "Checking installed Java version..."
+          java -version
+          echo "Java installation completed"
+        fi
         
         # Download Flyway from a reliable source
         FLYWAY_VERSION="11.14.1"
