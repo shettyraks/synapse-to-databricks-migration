@@ -23,32 +23,24 @@ includes:
 
 targets:
   dev:
-    workspace:
-      host: ${var.databricks_host_dev}
     variables:
       environment: "dev"
       catalog: "main"
       schema_prefix: "dev_"
       
   sit:
-    workspace:
-      host: ${var.databricks_host_sit}
     variables:
       environment: "sit"
       catalog: "main"
       schema_prefix: "sit_"
       
   uat:
-    workspace:
-      host: ${var.databricks_host_uat}
     variables:
       environment: "uat"
       catalog: "main"
       schema_prefix: "uat_"
       
   prod:
-    workspace:
-      host: ${var.databricks_host_prod}
     variables:
       environment: "prod"
       catalog: "main"
