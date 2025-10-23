@@ -8,9 +8,18 @@ bundle:
 workspace:
   root_path: /Workspace/Shared/synapse-migration
 
-resources:
+variables:
+  environment:
+    description: "Environment name (dev, sit, uat, prod)"
+  catalog:
+    description: "Catalog name"
+  schema_prefix:
+    description: "Schema prefix for environment"
+
+includes: 
+  - src/Inventory/jobs/inventory_job.yml
   # Job configurations are now defined in domain-specific files
-  # See src/*/jobs/*.yml for individual job definitions
+  # See src/*/jobs.yml for individual job definitions
 
 targets:
   dev:
