@@ -104,13 +104,47 @@ jobs:
         # Verify the download
         if [ -f "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" ] && [ $(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") -gt 1000000 ]; then
           echo "Flyway downloaded successfully ($(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") bytes)"
+          
+          # Extract the archive
+          echo "Extracting Flyway archive..."
           tar -xzf "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
-          sudo ln -s "$(pwd)/flyway-commandline-${FLYWAY_VERSION}/flyway" /usr/local/bin/flyway
+          
+          # Check what was extracted
+          echo "Checking extracted contents..."
+          ls -la flyway-${FLYWAY_VERSION}/ || echo "Extraction directory not found"
+          
+          # Find the actual flyway executable
+          FLYWAY_EXECUTABLE=$(find flyway-${FLYWAY_VERSION} -name "flyway" -type f | head -1)
+          if [ -n "$FLYWAY_EXECUTABLE" ]; then
+            echo "Found Flyway executable: $FLYWAY_EXECUTABLE"
+            echo "Making executable..."
+            chmod +x "$FLYWAY_EXECUTABLE"
+            
+            # Create symlink
+            echo "Creating symlink..."
+            sudo ln -sf "$(pwd)/$FLYWAY_EXECUTABLE" /usr/local/bin/flyway
+            
+            # Verify symlink was created
+            if [ -L /usr/local/bin/flyway ]; then
+              echo "Symlink created successfully"
+              ls -la /usr/local/bin/flyway
+            else
+              echo "❌ Symlink creation failed"
+              exit 1
+            fi
+          else
+            echo "❌ Flyway executable not found in extracted archive"
+            ls -la flyway-${FLYWAY_VERSION}/
+            exit 1
+          fi
+          
+          # Clean up
           rm "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
           echo "Flyway installed successfully"
           
           # Verify Flyway installation
-          flyway --version || echo "Flyway verification failed"
+          echo "Testing Flyway command..."
+          /usr/local/bin/flyway --version || echo "Flyway verification failed"
         else
           echo "Download failed or file too small, trying alternative..."
           # Alternative: Install via package manager if available
