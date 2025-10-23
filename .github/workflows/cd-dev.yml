@@ -93,20 +93,20 @@ jobs:
         else
           echo "Primary download failed, trying alternative URL..."
           # Try alternative download method
-          curl -L -o "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" "https://github.com/flyway/flyway/releases/download/${FLYWAY_VERSION}/flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
+          curl -L -o "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" "https://github.com/flyway/flyway/releases/download/flyway-${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
         fi
         
         # Check what we actually downloaded
         echo "Checking downloaded file..."
-        ls -la "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File not found"
-        file "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File type check failed"
+        ls -la "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File not found"
+        file "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File type check failed"
         
         # Verify the download
-        if [ -f "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz" ] && [ $(stat -c%s "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz") -gt 1000000 ]; then
-          echo "Flyway downloaded successfully ($(stat -c%s "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz") bytes)"
-          tar -xzf "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
-          sudo ln -s "$(pwd)/flyway-${FLYWAY_VERSION}/flyway" /usr/local/bin/flyway
-          rm "flyway-${FLYWAY_VERSION}-linux-x64.tar.gz"
+        if [ -f "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" ] && [ $(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") -gt 1000000 ]; then
+          echo "Flyway downloaded successfully ($(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") bytes)"
+          tar -xzf "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
+          sudo ln -s "$(pwd)/flyway-commandline-${FLYWAY_VERSION}/flyway" /usr/local/bin/flyway
+          rm "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
           echo "Flyway installed successfully"
           
           # Verify Flyway installation
