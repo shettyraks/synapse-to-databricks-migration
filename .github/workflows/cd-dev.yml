@@ -83,6 +83,11 @@ jobs:
           echo "Java installation completed"
         fi
         
+        # Set up Java memory flags for Databricks JDBC driver
+        echo "Setting up Java memory flags for Databricks JDBC driver..."
+        export JAVA_OPTS="--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
+        echo "JAVA_OPTS set to: $JAVA_OPTS"
+        
         # Download Flyway from a reliable source
         FLYWAY_VERSION="11.14.1"
         echo "Downloading Flyway ${FLYWAY_VERSION}..."
