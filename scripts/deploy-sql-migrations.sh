@@ -25,8 +25,8 @@ echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
 case $ENVIRONMENT in
     dev)
         DATABRICKS_HOST=${DATABRICKS_HOST_DEV}
-        HTTP_PATH=${HTTP_PATH_DEV}
-        USER=${USER_DEV}
+        HTTP_PATH=${HTTP_PATH_DEV:-"/sql/1.0/warehouses/8b5728cafe72b647"}
+        USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
         SCHEMA_NAME="dev_inventory"
         ;;
@@ -57,6 +57,14 @@ case $ENVIRONMENT in
         ;;
 esac
 
+# Debug: Print final values after fallback
+echo "Debug - Final values after fallback:"
+echo "DATABRICKS_HOST: ${DATABRICKS_HOST}"
+echo "HTTP_PATH: ${HTTP_PATH}"
+echo "USER: ${USER}"
+echo "PASSWORD: ${PASSWORD:0:10}..."
+echo "SCHEMA_NAME: ${SCHEMA_NAME}"
+
 # Download Databricks JDBC driver if not present
 if [ ! -f "databricks-jdbc-driver.jar" ]; then
     echo "Downloading Databricks JDBC driver..."
@@ -77,7 +85,7 @@ flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
 flyway.cleanDisabled=true
-flyway.driverJarFiles=databricks-jdbc-driver.jar
+flyway.jdbcDriverJarFiles=databricks-jdbc-driver.jar
 FLYWAY_EOF
 
 # Debug: Print the generated flyway.conf
