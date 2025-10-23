@@ -50,10 +50,18 @@ case $ENVIRONMENT in
         ;;
 esac
 
+# Download Databricks JDBC driver if not present
+if [ ! -f "databricks-jdbc-driver.jar" ]; then
+    echo "Downloading Databricks JDBC driver..."
+    curl -L -o databricks-jdbc-driver.jar "https://repo1.maven.org/maven2/com/databricks/databricks-jdbc/2.6.25/databricks-jdbc-2.6.25.jar"
+    echo "Databricks JDBC driver downloaded"
+fi
+
 # Create environment-specific flyway config
 cat > flyway.conf << FLYWAY_EOF
-flyway.url=jdbc:spark://${DATABRICKS_HOST}:443/default;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD}
-flyway.user=${USER}
+flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443/default;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD}
+flyway.driver=com.databricks.client.jdbc.Driver
+flyway.user=token
 flyway.password=${PASSWORD}
 flyway.locations=filesystem:sql_deployment
 flyway.schemas=${SCHEMA_NAME}
@@ -62,6 +70,7 @@ flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
 flyway.cleanDisabled=true
+flyway.driverJarFiles=databricks-jdbc-driver.jar
 FLYWAY_EOF
 
 # Run Flyway migrations for each domain

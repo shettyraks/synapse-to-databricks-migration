@@ -167,6 +167,13 @@ jobs:
           exit 1
         fi
     
+    - name: Download Databricks JDBC Driver
+      run: |
+        echo "Downloading Databricks JDBC driver for Flyway..."
+        curl -L -o databricks-jdbc-driver.jar "https://repo1.maven.org/maven2/com/databricks/databricks-jdbc/2.6.25/databricks-jdbc-2.6.25.jar"
+        echo "Databricks JDBC driver downloaded successfully"
+        ls -la databricks-jdbc-driver.jar
+
     - name: Run SQL Migrations
       run: |
         echo "Running SQL migrations for development environment..."
@@ -174,6 +181,10 @@ jobs:
       env:
         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+        DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
+        HTTP_PATH_DEV: ${{ secrets.HTTP_PATH_DEV }}
+        USER_DEV: token
+        PASSWORD_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
     - name: Deployment Complete
       run: |
