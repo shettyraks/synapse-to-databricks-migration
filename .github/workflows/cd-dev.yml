@@ -182,7 +182,7 @@ jobs:
         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
         DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
-        HTTP_PATH_DEV: ${{ secrets.HTTP_PATH_DEV }}
+        HTTP_PATH_DEV: /sql/1.0/warehouses/8b5728cafe72b647
         USER_DEV: token
         PASSWORD_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
