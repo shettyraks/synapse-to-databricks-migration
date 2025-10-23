@@ -112,14 +112,35 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     
     # Find the Flyway JAR file and run it directly with Java memory flags
     # Look for the main Flyway JAR (not database-specific ones)
+    echo "Debug - Searching for Flyway JAR..."
+    
+    # First try: Look for flyway-commandline JAR
     FLYWAY_JAR=$(find /usr/local/bin -name "flyway-commandline*.jar" 2>/dev/null | head -1)
+    echo "Debug - Found in /usr/local/bin: $FLYWAY_JAR"
+    
     if [ -z "$FLYWAY_JAR" ]; then
-        # Try to find it in the extracted directory - look for main flyway JAR
+        # Second try: Look in current directory
         FLYWAY_JAR=$(find . -name "flyway-commandline*.jar" 2>/dev/null | head -1)
+        echo "Debug - Found flyway-commandline JAR: $FLYWAY_JAR"
     fi
+    
     if [ -z "$FLYWAY_JAR" ]; then
-        # Fallback: look for any flyway JAR but exclude database-specific ones
-        FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | grep -v "flyway-database-" | grep -v "flyway-sql" | head -1)
+        # Third try: Look for main flyway JAR (not database-specific)
+        echo "Debug - Looking for main flyway JAR..."
+        FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | grep -v "flyway-database-" | grep -v "flyway-sql" | grep -v "flyway-core" | head -1)
+        echo "Debug - Found main flyway JAR: $FLYWAY_JAR"
+    fi
+    
+    if [ -z "$FLYWAY_JAR" ]; then
+        # Fourth try: Look for any executable JAR with main class
+        echo "Debug - Looking for executable JAR..."
+        for jar in $(find . -name "flyway*.jar" 2>/dev/null); do
+            if jar tf "$jar" 2>/dev/null | grep -q "org/flywaydb/core/Flyway.class"; then
+                FLYWAY_JAR="$jar"
+                echo "Debug - Found executable flyway JAR: $FLYWAY_JAR"
+                break
+            fi
+        done
     fi
     
     if [ -n "$FLYWAY_JAR" ]; then
