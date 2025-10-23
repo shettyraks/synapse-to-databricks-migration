@@ -27,19 +27,10 @@ jobs:
         pip install -r requirements.txt
         echo "Python dependencies installed successfully"
     
-    - name: Install Homebrew
-      run: |
-        echo "Installing Homebrew on Ubuntu..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $GITHUB_ENV
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "Homebrew installed successfully"
-    
     - name: Install Databricks CLI
       run: |
-        echo "Installing Databricks CLI via Homebrew..."
-        brew tap databricks/tap
-        brew install databricks
+        echo "Installing Databricks CLI via official script..."
+        curl -fsSL https://databricks.com/cli/latest/install.sh | bash
         echo "Databricks CLI installed successfully"
     
     - name: Configure Databricks CLI
