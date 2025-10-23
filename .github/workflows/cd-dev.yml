@@ -26,17 +26,29 @@ jobs:
     
     - name: Configure Databricks CLI
       run: |
-        echo "${{ secrets.DATABRICKS_HOST_DEV }}" | databricks configure --token
+        echo "Configuring Databricks CLI with environment variables..."
+        export DATABRICKS_HOST="${{ secrets.DATABRICKS_HOST_DEV }}"
+        export DATABRICKS_TOKEN="${{ secrets.DATABRICKS_TOKEN_DEV }}"
+        echo "Databricks CLI configured successfully"
       env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
     - name: Deploy Databricks Assets
       run: |
+        echo "Deploying Databricks assets to development environment..."
         databricks bundle deploy --target dev
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
     - name: Run SQL Migrations
       run: |
+        echo "Running SQL migrations for development environment..."
         ./scripts/deploy-sql-migrations.sh dev
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
     - name: Deployment Complete
       run: |
