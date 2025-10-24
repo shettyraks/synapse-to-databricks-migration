@@ -142,17 +142,15 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
             fi
         done
     fi
-    
-    
     echo "Flyway JAR not found, trying direct flyway command..."
-    flyway -configFiles=flyway.conf migrate
+    flyway -X -configFiles=flyway.conf migrate
     
     
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
     else
         echo "Error deploying $domain migrations to $ENVIRONMENT"
-        exit 1
+        exit 10
     fi
 done
 
