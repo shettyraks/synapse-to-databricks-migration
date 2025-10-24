@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS main.inventory.inventory_header (
     created_date TIMESTAMP NOT NULL,
     updated_date TIMESTAMP NOT NULL,
     created_by STRING NOT NULL,
-    updated_by STRING NOT NULL,
-    CONSTRAINT pk_inventory_header PRIMARY KEY (inventory_id)
+    updated_by STRING NOT NULL
 ) USING DELTA
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',

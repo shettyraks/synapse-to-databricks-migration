@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS main.inventory.calendar_dim (
     day_of_week INT NOT NULL,
     day_name STRING NOT NULL,
     month_name STRING NOT NULL,
-    quarter_name STRING NOT NULL,
-    CONSTRAINT pk_calendar_dim PRIMARY KEY (calendar_date)
+    quarter_name STRING NOT NULL
 ) USING DELTA
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',

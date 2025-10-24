@@ -13,9 +13,7 @@ CREATE TABLE IF NOT EXISTS main.inventory.inventory_transaction (
     created_date TIMESTAMP NOT NULL,
     updated_date TIMESTAMP NOT NULL,
     created_by STRING NOT NULL,
-    updated_by STRING NOT NULL,
-    CONSTRAINT pk_inventory_transaction PRIMARY KEY (transaction_id),
-    CONSTRAINT fk_inventory_header FOREIGN KEY (inventory_id) REFERENCES main.inventory.inventory_header(inventory_id)
+    updated_by STRING NOT NULL
 ) USING DELTA
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',

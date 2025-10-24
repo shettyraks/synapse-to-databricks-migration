@@ -40,9 +40,8 @@ create_flyway_config() {
     
     cat > "flyway_local_$(echo $domain | tr '[:upper:]' '[:lower:]').conf" << FLYWAY_EOF
 # Local Flyway Configuration for $domain
-flyway.url=jdbc:spark://${DATABRICKS_HOST_LOCAL}:443/default;transportMode=http;ssl=1;httpPath=${HTTP_PATH_LOCAL};AuthMech=3;UID=${USER_LOCAL};PWD=${PASSWORD_LOCAL}
-flyway.user=${USER_LOCAL}
-flyway.password=${PASSWORD_LOCAL}
+flyway.url=jdbc:databricks://${DATABRICKS_HOST_LOCAL}:443/default;transportMode=http;ssl=1;httpPath=${HTTP_PATH_LOCAL};AuthMech=3;UID=${USER_LOCAL};PWD=${PASSWORD_LOCAL};ConnCatalog=main
+flyway.driver=com.databricks.client.jdbc.Driver
 flyway.locations=filesystem:src/${domain}/sql_deployment
 flyway.schemas=${schema_name}
 flyway.defaultSchema=${schema_name}
