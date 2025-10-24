@@ -80,8 +80,8 @@ cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=main
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.locations=filesystem:./src/Inventory/sql_deployment
-flyway.schemas=${SCHEMA_NAME}
-flyway.defaultSchema=${SCHEMA_NAME}
+flyway.schemas=inventory
+flyway.defaultSchema=inventory
 flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
@@ -96,10 +96,6 @@ cat flyway.conf
 pwd
 ls -la
 
-cd  flyway-11.14.1
-echo "Current directory: $(pwd)"
-echo "Contents of flyway directory:"
-ls -la
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     echo "Current directory: $(pwd)"
