@@ -38,6 +38,7 @@ services:
       - FLYWAY_URL=jdbc:hive2://spark-sql:10000/default
       - FLYWAY_USER=spark
       - FLYWAY_PASSWORD=spark
+      - JDK_JAVA_OPTIONS=--enable-native-access=ALL-UNNAMED
     command: ["info"]
 
   # Jupyter for notebook testing
