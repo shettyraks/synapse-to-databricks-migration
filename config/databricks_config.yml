@@ -1,0 +1,30 @@
+# Databricks deployment input file
+# Define per-environment customer, catalog, and schema names
+
+environments:
+  dev:
+    customer: PANDs
+    catalog: main
+    schemas:
+      - inventory
+      - masterdata
+  sit:
+    customer: CHANGE_ME
+    catalog: main
+    schemas:
+      - inventory
+      - masterdata
+  uat:
+    customer: CHANGE_ME
+    catalog: main
+    schemas:
+      - inventory
+      - masterdata
+  prod:
+    customer: CHANGE_ME
+    catalog: main
+    schemas:
+      - inventory
+      - masterdata
+
+
