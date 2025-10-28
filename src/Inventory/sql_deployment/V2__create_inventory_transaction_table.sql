@@ -1,4 +1,4 @@
-CREATE TABLE  main.inventory.inventory_transaction (
+CREATE TABLE  inventory.inventory_transaction (
     transaction_id STRING NOT NULL,
     inventory_id STRING NOT NULL,
     upc STRING NOT NULL,

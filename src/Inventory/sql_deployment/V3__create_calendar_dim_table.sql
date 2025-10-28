@@ -1,5 +1,5 @@
 -- Create Calendar Dimension Table
-CREATE TABLE IF NOT EXISTS main.inventory.calendar_dim (
+CREATE TABLE IF NOT EXISTS inventory.calendar_dim (
     calendar_date DATE NOT NULL,
     fiscal_year INT NOT NULL,
     fiscal_quarter INT NOT NULL,
