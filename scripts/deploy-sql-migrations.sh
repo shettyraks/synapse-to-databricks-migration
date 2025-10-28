@@ -116,8 +116,8 @@ cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD};ConnCatalog=${CATALOG}
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.locations=${FLYWAY_LOCATIONS}
-flyway.schemas=inventory
-flyway.defaultSchema=inventory
+flyway.schemas=${SCHEMAS}
+flyway.defaultSchema=flyway_${CATALOG}
 flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
@@ -138,6 +138,9 @@ echo "Current directory: $(pwd)"
 echo "Flyway locations: ${FLYWAY_LOCATIONS}"
 # Set JDK Java options for native access
 export JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+
+echo "Running Flyway repair (update checksums)..."
+flyway -configFiles=flyway.conf repair
 
 echo "Running Flyway migrate..."
 flyway -X -configFiles=flyway.conf migrate
