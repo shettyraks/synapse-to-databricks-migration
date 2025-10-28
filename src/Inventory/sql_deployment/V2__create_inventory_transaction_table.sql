@@ -1,5 +1,4 @@
--- Create Inventory Transaction Table
-CREATE TABLE IF NOT EXISTS main.inventory.inventory_transaction (
+CREATE TABLE  main.inventory.inventory_transaction (
     transaction_id STRING NOT NULL,
     inventory_id STRING NOT NULL,
     upc STRING NOT NULL,
@@ -18,4 +17,4 @@ CREATE TABLE IF NOT EXISTS main.inventory.inventory_transaction (
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
-);
+)
