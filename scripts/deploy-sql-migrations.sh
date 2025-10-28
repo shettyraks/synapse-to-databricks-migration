@@ -123,7 +123,6 @@ flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
 flyway.cleanDisabled=true
-flyway.ddlInTransaction=true
 flyway.placeholders.customer=${CUSTOMER}
 FLYWAY_EOF
 
