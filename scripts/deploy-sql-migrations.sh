@@ -141,7 +141,7 @@ fi
 export JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 
 echo "Running Flyway repair (update checksums)..."
-#flyway -configFiles=flyway.conf repair
+flyway -configFiles=flyway.conf repair
 
 echo "Running Flyway migrate..."
 FLYWAY_OPTS="-configFiles=flyway.conf"
