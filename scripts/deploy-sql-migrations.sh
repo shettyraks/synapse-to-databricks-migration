@@ -6,7 +6,8 @@
 # Deploy latest configuration
 # Test simplified Flyway configuration
 
-set -e
+set -euo pipefail
+DEBUG=${DEBUG:-0}
 
 ENVIRONMENT=$1
 if [ -z "$ENVIRONMENT" ]; then
@@ -40,13 +41,13 @@ fi
 
 echo "Deploying SQL migrations to $ENVIRONMENT environment..."
 
-# Debug: Print environment variables
-echo "Debug - Environment variables:"
-echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST}"
-echo "HTTP_PATH_DEV: ${HTTP_PATH_DEV}"
-echo "USER_DEV: ${USER_DEV}"
-echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
-echo "Customer: ${CUSTOMER}"
+if [ "$DEBUG" = "1" ]; then
+    echo "Debug - Environment variables:"
+    echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST:-}"
+    echo "HTTP_PATH_DEV: ${HTTP_PATH_DEV:-}"
+    echo "USER_DEV: ${USER_DEV:-}"
+    echo "Customer: ${CUSTOMER}"
+fi
 
 # Set environment-specific variables
 case $ENVIRONMENT in
@@ -55,7 +56,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_DEV}
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
-        SCHEMA_Names=${SCHEMAS}
+        SCHEMAS_VAR=${SCHEMAS}
         CATALOG=${CATALOG:-"main"}
         ;;
     sit)
@@ -63,7 +64,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_SIT}
         USER=${USER_SIT}
         PASSWORD=${PASSWORD_SIT}
-        SCHEMA_Names=${SCHEMAS}
+        SCHEMAS_VAR=${SCHEMAS}
         CATALOG=${CATALOG:-"main"}
         ;;
     uat)
@@ -71,7 +72,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_UAT}
         USER=${USER_UAT}
         PASSWORD=${PASSWORD_UAT}
-        SCHEMA_NAME=${SCHEMAS}
+        SCHEMAS_VAR=${SCHEMAS}
         CATALOG=${CATALOG:-"main"}
         ;;
     prod)
@@ -79,7 +80,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_PROD}
         USER=${USER_PROD}
         PASSWORD=${PASSWORD_PROD}
-        SCHEMA_NAME=${SCHEMAS}
+        SCHEMAS_VAR=${SCHEMAS}
         CATALOG=${CATALOG:-"main"}
         ;;
     *)
@@ -88,20 +89,20 @@ case $ENVIRONMENT in
     ;;
 esac
 
-# Debug: Print final values after fallback
-echo "Debug - Final values after fallback:"
-echo "DATABRICKS_HOST: ${DATABRICKS_HOST}"
-echo "HTTP_PATH: ${HTTP_PATH}"
-echo "USER: ${USER}"
-echo "PASSWORD: ${PASSWORD:0:10}..."
-echo "SCHEMAS: ${SCHEMAS}"
-echo "CATALOG: ${CATALOG}"
-echo "CUSTOMER: ${CUSTOMER}"
+if [ "$DEBUG" = "1" ]; then
+    echo "Debug - Final values after fallback:"
+    echo "DATABRICKS_HOST: ${DATABRICKS_HOST}"
+    echo "HTTP_PATH: ${HTTP_PATH}"
+    echo "USER: ${USER}"
+    echo "SCHEMAS: ${SCHEMAS_VAR:-$SCHEMAS}"
+    echo "CATALOG: ${CATALOG}"
+    echo "CUSTOMER: ${CUSTOMER}"
+fi
 
 # Download Databricks JDBC driver if not present
 if [ ! -f "databricks-jdbc-driver.jar" ]; then
     echo "Downloading Databricks JDBC driver..."
-    curl -L -o databricks-jdbc-driver.jar "https://repo1.maven.org/maven2/com/databricks/databricks-jdbc/2.6.25/databricks-jdbc-2.6.25.jar"
+    curl -fsSL -o databricks-jdbc-driver.jar "https://repo1.maven.org/maven2/com/databricks/databricks-jdbc/2.6.25/databricks-jdbc-2.6.25.jar"
     echo "Databricks JDBC driver downloaded"
 fi
 
@@ -116,7 +117,7 @@ cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD};ConnCatalog=${CATALOG}
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.locations=${FLYWAY_LOCATIONS}
-flyway.schemas=${SCHEMAS}
+flyway.schemas=${SCHEMAS_VAR:-$SCHEMAS}
 flyway.defaultSchema=flyway_${CUSTOMER}
 flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
@@ -125,17 +126,17 @@ flyway.cleanDisabled=true
 flyway.placeholders.customer=${CUSTOMER}
 FLYWAY_EOF
 
-# Debug: Print the generated flyway.conf
-echo "Debug - Generated flyway.conf:"
-cat flyway.conf
+if [ "$DEBUG" = "1" ]; then
+    echo "Debug - Generated flyway.conf:"
+    cat flyway.conf
+fi
 
 # Run Flyway migrations
-pwd
-ls -la
-
 echo "Running Flyway migrate for all domains..."
-echo "Current directory: $(pwd)"
-echo "Flyway locations: ${FLYWAY_LOCATIONS}"
+if [ "$DEBUG" = "1" ]; then
+    echo "Current directory: $(pwd)"
+    echo "Flyway locations: ${FLYWAY_LOCATIONS}"
+fi
 # Set JDK Java options for native access
 export JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 
@@ -143,7 +144,11 @@ echo "Running Flyway repair (update checksums)..."
 flyway -configFiles=flyway.conf repair
 
 echo "Running Flyway migrate..."
-flyway -X -configFiles=flyway.conf migrate
+FLYWAY_OPTS="-configFiles=flyway.conf"
+if [ "$DEBUG" = "1" ]; then
+    FLYWAY_OPTS="-X ${FLYWAY_OPTS}"
+fi
+flyway ${FLYWAY_OPTS} migrate
 
 if [ $? -eq 0 ]; then
     echo "Successfully deployed all migrations to $ENVIRONMENT"
