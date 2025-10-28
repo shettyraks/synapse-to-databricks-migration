@@ -144,6 +144,7 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
     fi
     # Set JDK Java options for native access
     export JDK_JAVA_OPTIONS="--enable-native-access=ALL-UNNAMED"
+    export JAVA_OPTS="--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
     
     echo "Flyway JAR not found, trying direct flyway command..."
     flyway -X -configFiles=flyway.conf migrate
