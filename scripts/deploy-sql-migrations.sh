@@ -30,14 +30,13 @@ echo "DATABRICKS_HOST_DEV: ${DATABRICKS_HOST}"
 echo "HTTP_PATH_DEV: ${HTTP_PATH_DEV}"
 echo "USER_DEV: ${USER_DEV}"
 echo "PASSWORD_DEV: ${PASSWORD_DEV:0:10}..." # Show first 10 chars only
-
 echo "Customer: ${CUSTOMER}"
 
 # Set environment-specific variables
 case $ENVIRONMENT in
     dev)
         DATABRICKS_HOST=${DATABRICKS_HOST}
-        HTTP_PATH=${HTTP_PATH_DEV:-"/sql/1.0/warehouses/8b5728cafe72b647"}
+        HTTP_PATH=${HTTP_PATH_DEV}
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
         SCHEMA_Names=${Schema_names}
@@ -95,6 +94,7 @@ FLYWAY_LOCATIONS=$(find ./src -type d -path "./src/*/sql_deployment" | sed 's#^#
 if [ -z "$FLYWAY_LOCATIONS" ]; then
     echo "Warning: No sql_deployment directories found under ./src"
 fi
+echo "FLYWAY_LOCATIONS: $FLYWAY_LOCATIONS"
 
 cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=
