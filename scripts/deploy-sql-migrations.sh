@@ -15,15 +15,27 @@ if [ -z "$ENVIRONMENT" ]; then
     exit 1
 fi
 
-# Customer parameter: prefer arg2, then CUSTOMER env; avoid prompts in CI/non-interactive
+# Load config-driven values (customer, catalog, schemas)
+CONFIG_PATH=${CONFIG_PATH:-"config/customer_input.yml"}
+echo "Loading config from ${CONFIG_PATH} for environment ${ENVIRONMENT}"
+if [ ! -f "$CONFIG_PATH" ]; then
+    echo "Error: Config file not found at ${CONFIG_PATH}"
+    exit 2
+fi
+
+# Ensure Python deps (PyYAML) are available in CI; assume local dev has them
+if ! python3 -c 'import yaml' >/dev/null 2>&1; then
+    echo "PyYAML not found; trying to install locally (pip --user)" || true
+    python3 -m pip install --user -q PyYAML || true
+fi
+
+eval "$(python3 scripts/read_config.py ${CONFIG_PATH} ${ENVIRONMENT})"
+
+# Allow overriding CUSTOMER via arg/env
 CUSTOMER=${2:-${CUSTOMER}}
 if [ -z "$CUSTOMER" ]; then
-    if [ -n "$CI" ] || [ ! -t 0 ]; then
-        CUSTOMER="PANDs"
-        echo "No CUSTOMER provided; defaulting to ${CUSTOMER} for non-interactive run"
-    else
-        read -p "Enter customer identifier (e.g., PANDs): " CUSTOMER
-    fi
+    echo "Error: CUSTOMER not resolved from config or args"
+    exit 3
 fi
 
 echo "Deploying SQL migrations to $ENVIRONMENT environment..."
@@ -43,32 +55,32 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_DEV}
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
-        SCHEMA_Names=${Schema_names}
-        CATALOG=${CATALOG_DEV:-"main"}
+        SCHEMA_Names=${SCHEMAS}
+        CATALOG=${CATALOG:-"main"}
         ;;
     sit)
         DATABRICKS_HOST=${DATABRICKS_HOST_SIT}
         HTTP_PATH=${HTTP_PATH_SIT}
         USER=${USER_SIT}
         PASSWORD=${PASSWORD_SIT}
-        SCHEMA_Names=${Schema_names}
-        CATALOG=${CATALOG_SIT:-"main"}
+        SCHEMA_Names=${SCHEMAS}
+        CATALOG=${CATALOG:-"main"}
         ;;
     uat)
         DATABRICKS_HOST=${DATABRICKS_HOST_UAT}
         HTTP_PATH=${HTTP_PATH_UAT}
         USER=${USER_UAT}
         PASSWORD=${PASSWORD_UAT}
-        SCHEMA_NAME=${Schema_names}
-        CATALOG=${CATALOG_UAT:-"main"}
+        SCHEMA_NAME=${SCHEMAS}
+        CATALOG=${CATALOG:-"main"}
         ;;
     prod)
         DATABRICKS_HOST=${DATABRICKS_HOST_PROD}
         HTTP_PATH=${HTTP_PATH_PROD}
         USER=${USER_PROD}
         PASSWORD=${PASSWORD_PROD}
-        SCHEMA_NAME=${Schema_names}
-        CATALOG=${CATALOG_PROD:-"main"}
+        SCHEMA_NAME=${SCHEMAS}
+        CATALOG=${CATALOG:-"main"}
         ;;
     *)
         echo "Error: Unknown environment $ENVIRONMENT"
@@ -82,7 +94,7 @@ echo "DATABRICKS_HOST: ${DATABRICKS_HOST}"
 echo "HTTP_PATH: ${HTTP_PATH}"
 echo "USER: ${USER}"
 echo "PASSWORD: ${PASSWORD:0:10}..."
-echo "SCHEMA_NAME: ${SCHEMA_NAME}"
+echo "SCHEMAS: ${SCHEMAS}"
 echo "CATALOG: ${CATALOG}"
 echo "CUSTOMER: ${CUSTOMER}"
 

@@ -4,7 +4,7 @@
 environments:
   dev:
     customer: PANDs
-    catalog: main
+    catalog: rio_cicd_setup_dev
     schemas:
       - inventory
       - masterdata
