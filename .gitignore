@@ -8,6 +8,11 @@ local.env
 # Temporary Flyway configuration files
 flyway_local_*.conf
 flyway.conf
+flyway_*_test.conf
+flyway_*.conf
+
+# JDBC drivers (should be downloaded, not versioned)
+*.jar
 
 # Python cache
 __pycache__/
