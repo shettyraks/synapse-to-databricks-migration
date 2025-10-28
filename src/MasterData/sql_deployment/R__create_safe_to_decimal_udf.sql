@@ -1,5 +1,4 @@
--- Create a sample Databricks SQL UDF to safely cast strings to numeric
--- Places the function in the `masterdata` schema if available; creates schema when missing
+-- Repeatable migration: ensures the UDF exists and is up to date on every run
 
 CREATE SCHEMA IF NOT EXISTS masterdata;
 
