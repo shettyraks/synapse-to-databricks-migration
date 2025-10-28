@@ -1,5 +1,5 @@
 -- Create Inventory Header Table
-CREATE TABLE IF NOT EXISTS inventory.inventory_header1 (
+CREATE TABLE IF NOT EXISTS inventory.inventory_header (
     inventory_id STRING NOT NULL,
     location_id STRING NOT NULL,
     fiscal_period STRING NOT NULL,
