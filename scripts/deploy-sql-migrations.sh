@@ -99,7 +99,7 @@ if [ -z "$FLYWAY_LOCATIONS" ]; then
     echo "Warning: No sql_deployment directories found under ./src"
 fi
 echo "FLYWAY_LOCATIONS: $FLYWAY_LOCATIONS"
-
+DATABRICKS_HOST="adb-3243176766981043.3.azuredatabricks.net"
 cat > flyway.conf << FLYWAY_EOF
 flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD};ConnCatalog=${CATALOG}
 flyway.driver=com.databricks.client.jdbc.Driver
