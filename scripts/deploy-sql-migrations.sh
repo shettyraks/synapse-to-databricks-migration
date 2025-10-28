@@ -121,44 +121,6 @@ ls -la
 echo "Running Flyway migrate for all domains..."
 echo "Current directory: $(pwd)"
 echo "Flyway locations: ${FLYWAY_LOCATIONS}"
-
-# Debug: List all JAR files to help identify the correct one
-echo "Debug - Available JAR files:"
-find . -name "*.jar" 2>/dev/null | head -10 || echo "No JAR files found"
-
-# Find the Flyway JAR file and run it directly with Java memory flags
-# Look for the main Flyway JAR (not database-specific ones)
-echo "Debug - Searching for Flyway JAR..."
-
-# First try: Look for flyway-commandline JAR
-FLYWAY_JAR=$(find /usr/local/bin -name "flyway-commandline*.jar" 2>/dev/null | head -1)
-echo "Debug - Found in /usr/local/bin: $FLYWAY_JAR"
-
-if [ -z "$FLYWAY_JAR" ]; then
-    # Second try: Look in current directory
-    FLYWAY_JAR=$(find . -name "flyway-commandline*.jar" 2>/dev/null | head -1)
-    echo "Debug - Found flyway-commandline JAR: $FLYWAY_JAR"
-fi
-
-if [ -z "$FLYWAY_JAR" ]; then
-    # Third try: Look for main flyway JAR (not database-specific)
-    echo "Debug - Looking for main flyway JAR..."
-    FLYWAY_JAR=$(find . -name "flyway*.jar" 2>/dev/null | grep -v "flyway-database-" | grep -v "flyway-sql" | grep -v "flyway-core" | head -1)
-    echo "Debug - Found main flyway JAR: $FLYWAY_JAR"
-fi
-
-if [ -z "$FLYWAY_JAR" ]; then
-    # Fourth try: Look for any executable JAR with main class
-    echo "Debug - Looking for executable JAR..."
-    for jar in $(find . -name "flyway*.jar" 2>/dev/null); do
-        if jar tf "$jar" 2>/dev/null | grep -q "org/flywaydb/core/Flyway.class"; then
-            FLYWAY_JAR="$jar"
-            echo "Debug - Found executable flyway JAR: $FLYWAY_JAR"
-            break
-        fi
-    done
-fi
-
 # Set JDK Java options for native access
 export JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 
