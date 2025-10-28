@@ -117,7 +117,7 @@ flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;htt
 flyway.driver=com.databricks.client.jdbc.Driver
 flyway.locations=${FLYWAY_LOCATIONS}
 flyway.schemas=${SCHEMAS}
-flyway.defaultSchema=flyway_${CATALOG}
+flyway.defaultSchema=flyway_${CUSTOMER}
 flyway.baselineOnMigrate=true
 flyway.validateOnMigrate=true
 flyway.outOfOrder=false
