@@ -5,7 +5,6 @@ This guide explains how to test Flyway and Databricks configurations locally bef
 ## Prerequisites
 
 ### Required Tools
-- Docker and Docker Compose
 - Python 3.8+
 - pip3
 - Databricks CLI (optional, for bundle testing)
@@ -15,7 +14,7 @@ This guide explains how to test Flyway and Databricks configurations locally bef
 # Install Databricks CLI
 pip install databricks-cli
 
-# Install Flyway (if not using Docker)
+# Install Flyway
 # Download from: https://flywaydb.org/download/
 ```
 
@@ -31,7 +30,6 @@ This script will:
 - Validate project structure
 - Test SQL files
 - Test job configurations
-- Run Docker-based tests
 - Execute individual test scripts
 
 ### 2. Individual Testing
@@ -67,17 +65,6 @@ cp local.env.template local.env
    PASSWORD_LOCAL=your-password-or-token
    ```
 
-### Docker Testing
-For testing without a Databricks instance:
-```bash
-docker-compose -f docker-compose.local.yml up -d
-```
-
-This starts:
-- Spark SQL server (port 10000)
-- Flyway container
-- Jupyter notebook (port 8888)
-
 ## Test Scripts Explained
 
 ### `test-local-comprehensive.sh`
@@ -86,7 +73,6 @@ Main testing script that runs all checks:
 - Project structure verification
 - SQL file counting
 - Job configuration validation
-- Docker service testing
 - Individual script execution
 
 ### `test-flyway-local.sh`
@@ -131,18 +117,12 @@ src/
    pip install databricks-cli
    ```
 
-2. **Docker not running**
-   ```bash
-   sudo systemctl start docker  # Linux
-   # or start Docker Desktop
-   ```
-
-3. **Permission denied on scripts**
+2. **Permission denied on scripts**
    ```bash
    chmod +x scripts/*.sh
    ```
 
-4. **Environment variables not set**
+3. **Environment variables not set**
    - Ensure `local.env` exists and is properly configured
    - Check that all required variables are set
 
