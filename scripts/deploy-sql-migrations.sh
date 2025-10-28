@@ -32,6 +32,7 @@ case $ENVIRONMENT in
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
         SCHEMA_NAME="dev_inventory"
+        CATALOG=${CATALOG_DEV:-"main"}
         ;;
     sit)
         DATABRICKS_HOST=${DATABRICKS_HOST_SIT}
@@ -39,6 +40,7 @@ case $ENVIRONMENT in
         USER=${USER_SIT}
         PASSWORD=${PASSWORD_SIT}
         SCHEMA_NAME="sit_inventory"
+        CATALOG=${CATALOG_SIT:-"main"}
         ;;
     uat)
         DATABRICKS_HOST=${DATABRICKS_HOST_UAT}
@@ -46,6 +48,7 @@ case $ENVIRONMENT in
         USER=${USER_UAT}
         PASSWORD=${PASSWORD_UAT}
         SCHEMA_NAME="uat_inventory"
+        CATALOG=${CATALOG_UAT:-"main"}
         ;;
     prod)
         DATABRICKS_HOST=${DATABRICKS_HOST_PROD}
@@ -53,11 +56,12 @@ case $ENVIRONMENT in
         USER=${USER_PROD}
         PASSWORD=${PASSWORD_PROD}
         SCHEMA_NAME="inventory"
+        CATALOG=${CATALOG_PROD:-"main"}
         ;;
     *)
         echo "Error: Unknown environment $ENVIRONMENT"
-        exit 1
-        ;;
+    exit 1
+    ;;
 esac
 
 # Debug: Print final values after fallback
@@ -67,6 +71,7 @@ echo "HTTP_PATH: ${HTTP_PATH}"
 echo "USER: ${USER}"
 echo "PASSWORD: ${PASSWORD:0:10}..."
 echo "SCHEMA_NAME: ${SCHEMA_NAME}"
+echo "CATALOG: ${CATALOG}"
 
 # Download Databricks JDBC driver if not present
 if [ ! -f "databricks-jdbc-driver.jar" ]; then
@@ -75,23 +80,6 @@ if [ ! -f "databricks-jdbc-driver.jar" ]; then
     echo "Databricks JDBC driver downloaded"
 fi
 
-
-cat > flyway.conf << FLYWAY_EOF
-flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog=main
-flyway.driver=com.databricks.client.jdbc.Driver
-flyway.locations=filesystem:./src/Inventory/sql_deployment
-flyway.schemas=inventory
-flyway.defaultSchema=inventory
-flyway.baselineOnMigrate=true
-flyway.validateOnMigrate=true
-flyway.outOfOrder=false
-flyway.cleanDisabled=true
-FLYWAY_EOF
-
-# Debug: Print the generated flyway.conf
-echo "Debug - Generated flyway.conf:"
-cat flyway.conf
-
 # Run Flyway migrations for each domain
 pwd
 ls -la
@@ -99,12 +87,25 @@ ls -la
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     echo "Current directory: $(pwd)"
-    echo "Changing to: ./src/$domain/sql_deployment"
-    #cd ./src/$domain/sql_deployment
-    echo "After cd, current directory: $(pwd)"
-    echo "Contents of sql_deployment directory:"
-    ls -la
-    echo "Running Flyway migrate..."
+    
+    # Set domain-specific schema name
+    DOMAIN_SCHEMA="${ENVIRONMENT}_$(echo $domain | tr '[:upper:]' '[:lower:]')"
+    
+    # Create domain-specific flyway config
+    cat > flyway_${domain}.conf << FLYWAY_EOF
+flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD};ConnCatalog=${CATALOG}
+flyway.driver=com.databricks.client.jdbc.Driver
+flyway.locations=filesystem:./src/$domain/sql_deployment
+flyway.schemas=${DOMAIN_SCHEMA}
+flyway.defaultSchema=${DOMAIN_SCHEMA}
+flyway.baselineOnMigrate=true
+flyway.validateOnMigrate=true
+flyway.outOfOrder=false
+flyway.cleanDisabled=true
+FLYWAY_EOF
+    
+    echo "Generated Flyway config for $domain:"
+    cat flyway_${domain}.conf
     
     # Debug: List all JAR files to help identify the correct one
     echo "Debug - Available JAR files:"
@@ -143,17 +144,19 @@ for domain in Inventory MasterData Rail Shipping SmartAlert; do
         done
     fi
     # Set JDK Java options for native access
-    export JDK_JAVA_OPTIONS="--enable-native-access=ALL-UNNAMED"
-    export JAVA_OPTS="--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
-    
-    echo "Flyway JAR not found, trying direct flyway command..."
-    flyway -X -configFiles=flyway.conf migrate
+    export JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+
+    echo "Running Flyway migrate for $domain..."
+    flyway -X -configFiles=flyway_${domain}.conf migrate
     
     
     if [ $? -eq 0 ]; then
         echo "Successfully deployed $domain migrations to $ENVIRONMENT"
+        # Clean up domain-specific config file
+        rm -f flyway_${domain}.conf
     else
         echo "Error deploying $domain migrations to $ENVIRONMENT"
+        rm -f flyway_${domain}.conf
         exit 10
     fi
 done
