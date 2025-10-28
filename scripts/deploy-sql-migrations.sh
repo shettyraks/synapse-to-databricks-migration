@@ -15,12 +15,16 @@ if [ -z "$ENVIRONMENT" ]; then
     exit 1
 fi
 
-# Optional customer parameter: from arg2 or CUSTOMER env; prompt if still empty
-CUSTOMER_INPUT=${2:-${CUSTOMER}}
-if [ -z "$CUSTOMER_INPUT" ]; then
-    read -p "Enter customer identifier (e.g., PANDs): " CUSTOMER_INPUT
+# Customer parameter: prefer arg2, then CUSTOMER env; avoid prompts in CI/non-interactive
+CUSTOMER=${2:-${CUSTOMER}}
+if [ -z "$CUSTOMER" ]; then
+    if [ -n "$CI" ] || [ ! -t 0 ]; then
+        CUSTOMER="PANDs"
+        echo "No CUSTOMER provided; defaulting to ${CUSTOMER} for non-interactive run"
+    else
+        read -p "Enter customer identifier (e.g., PANDs): " CUSTOMER
+    fi
 fi
-CUSTOMER="$CUSTOMER_INPUT"
 
 echo "Deploying SQL migrations to $ENVIRONMENT environment..."
 
