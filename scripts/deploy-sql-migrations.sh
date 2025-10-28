@@ -31,7 +31,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_DEV:-"/sql/1.0/warehouses/8b5728cafe72b647"}
         USER=${USER_DEV:-"token"}
         PASSWORD=${PASSWORD_DEV}
-        SCHEMA_NAME="dev_inventory"
+        SCHEMA_Names=${Schema_names}
         CATALOG=${CATALOG_DEV:-"main"}
         ;;
     sit)
@@ -39,7 +39,7 @@ case $ENVIRONMENT in
         HTTP_PATH=${HTTP_PATH_SIT}
         USER=${USER_SIT}
         PASSWORD=${PASSWORD_SIT}
-        SCHEMA_NAME="sit_inventory"
+        SCHEMA_Names=${Schema_names}
         CATALOG=${CATALOG_SIT:-"main"}
         ;;
     uat)
@@ -80,6 +80,23 @@ if [ ! -f "databricks-jdbc-driver.jar" ]; then
     echo "Databricks JDBC driver downloaded"
 fi
 
+
+cat > flyway.conf << FLYWAY_EOF
+flyway.url=jdbc:databricks://adb-3243176766981043.3.azuredatabricks.net:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=token;PWD=${PASSWORD};ConnCatalog={CATALOG}
+flyway.driver=com.databricks.client.jdbc.Driver
+flyway.locations=filesystem:./src/Inventory/sql_deployment
+flyway.schemas=inventory
+flyway.defaultSchema=inventory
+flyway.baselineOnMigrate=true
+flyway.validateOnMigrate=true
+flyway.outOfOrder=false
+flyway.cleanDisabled=true
+FLYWAY_EOF
+
+# Debug: Print the generated flyway.conf
+echo "Debug - Generated flyway.conf:"
+cat flyway.conf
+
 # Run Flyway migrations for each domain
 pwd
 ls -la
@@ -87,25 +104,12 @@ ls -la
 for domain in Inventory MasterData Rail Shipping SmartAlert; do
     echo "Deploying migrations for $domain..."
     echo "Current directory: $(pwd)"
-    
-    # Set domain-specific schema name
-    DOMAIN_SCHEMA="${ENVIRONMENT}_$(echo $domain | tr '[:upper:]' '[:lower:]')"
-    
-    # Create domain-specific flyway config
-    cat > flyway_${domain}.conf << FLYWAY_EOF
-flyway.url=jdbc:databricks://${DATABRICKS_HOST}:443;transportMode=http;ssl=1;httpPath=${HTTP_PATH};AuthMech=3;UID=${USER};PWD=${PASSWORD};ConnCatalog=${CATALOG}
-flyway.driver=com.databricks.client.jdbc.Driver
-flyway.locations=filesystem:./src/$domain/sql_deployment
-flyway.schemas=${DOMAIN_SCHEMA}
-flyway.defaultSchema=${DOMAIN_SCHEMA}
-flyway.baselineOnMigrate=true
-flyway.validateOnMigrate=true
-flyway.outOfOrder=false
-flyway.cleanDisabled=true
-FLYWAY_EOF
-    
-    echo "Generated Flyway config for $domain:"
-    cat flyway_${domain}.conf
+    echo "Changing to: ./src/$domain/sql_deployment"
+    #cd ./src/$domain/sql_deployment
+    echo "After cd, current directory: $(pwd)"
+    echo "Contents of sql_deployment directory:"
+    ls -la
+    echo "Running Flyway migrate..."
     
     # Debug: List all JAR files to help identify the correct one
     echo "Debug - Available JAR files:"

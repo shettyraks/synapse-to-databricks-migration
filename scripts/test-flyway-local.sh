@@ -78,9 +78,6 @@ test_domain_migrations() {
         return 0
     fi
     
-    # Set JDK Java options for native access
-    export JDK_JAVA_OPTIONS="--enable-native-access=ALL-UNNAMED"
-    
     # Test Flyway info
     echo "Running Flyway info for $domain..."
     flyway -configFiles="flyway_local_$(echo $domain | tr '[:upper:]' '[:lower:]').conf" info
