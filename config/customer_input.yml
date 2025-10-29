@@ -10,20 +10,23 @@ environments:
       - inventory
       - masterdata
   sit:
-    customer: CHANGE_ME
-    catalog: main
+    customer: TBD
+    catalog: rio_cicd_setup_sit
+    flyway_schema: flyway_sit
     schemas:
       - inventory
       - masterdata
   uat:
-    customer: CHANGE_ME
-    catalog: main
+    customer: TBD
+    catalog: rio_cicd_setup_uat
+    flyway_schema: flyway_uat
     schemas:
       - inventory
       - masterdata
   prod:
-    customer: CHANGE_ME
-    catalog: main
+    customer: TBD
+    catalog: rio_cicd_setup_prod
+    flyway_schema: flyway_prod
     schemas:
       - inventory
       - masterdata
