@@ -133,24 +133,77 @@ class DeploymentConfig:
         self.databricks_host = os.environ.get(f'DATABRICKS_HOST_{environment.upper()}')
         self.databricks_token = os.environ.get(f'DATABRICKS_TOKEN_{environment.upper()}')
         
+        # Service Principal credentials (alternative to token)
+        self.service_principal_client_id = os.environ.get(f'SERVICE_PRINCIPAL_CLIENT_ID_{environment.upper()}')
+        self.service_principal_client_secret = os.environ.get(f'SERVICE_PRINCIPAL_CLIENT_SECRET_{environment.upper()}')
+        self.service_principal_tenant_id = os.environ.get(f'SERVICE_PRINCIPAL_TENANT_ID_{environment.upper()}')
+        
+        # Determine authentication method
+        self.auth_method = self._determine_auth_method()
+        
         # Load Flyway credentials
         self.http_path = os.environ.get(f'HTTP_PATH_{environment.upper()}')
-        self.user = os.environ.get(f'USER_{environment.upper()}')
-        self.password = os.environ.get(f'PASSWORD_{environment.upper()}')
+        
+        # SQL connection credentials (can be token or service principal)
+        self.sql_user = os.environ.get(f'SQL_USER_{environment.upper()}')
+        self.sql_password = os.environ.get(f'SQL_PASSWORD_{environment.upper()}')
         
         # Load Flyway configuration
         self.flyway_locations = os.environ.get('FLYWAY_LOCATIONS', 'filesystem:src/Inventory/sql_deployment')
     
+    def _determine_auth_method(self) -> str:
+        """Determine which authentication method to use.
+        
+        Returns:
+            'service_principal' or 'token'
+        """
+        has_service_principal = all([
+            self.service_principal_client_id,
+            self.service_principal_client_secret,
+            self.service_principal_tenant_id
+        ])
+        
+        if has_service_principal:
+            return 'service_principal'
+        elif self.databricks_token:
+            return 'token'
+        else:
+            return 'token'  # Default to token
+    
     def get_jdbc_url(self) -> str:
-        """Get JDBC URL for Flyway."""
+        """Get JDBC URL for Flyway with support for both token and service principal auth.
+        
+        Returns:
+            JDBC URL string
+        """
         if not all([self.databricks_host, self.http_path]):
             raise ValueError("Missing required Databricks credentials")
         
-        return (f"jdbc:databricks://{self.databricks_host}:443;"
-                f"transportMode=http;ssl=1;"
-                f"httpPath={self.http_path};"
-                f"AuthMech=3;UID={self.user};PWD={self.password};"
-                f"ConnCatalog={self.env_config.catalog}")
+        # Build base JDBC URL
+        jdbc_url = (f"jdbc:databricks://{self.databricks_host}:443;"
+                   f"transportMode=http;ssl=1;"
+                   f"httpPath={self.http_path};"
+                   f"ConnCatalog={self.env_config.catalog}")
+        
+        # Add authentication parameters based on method
+        if self.auth_method == 'service_principal':
+            # Service Principal authentication
+            if not all([self.service_principal_client_id, self.service_principal_client_secret, 
+                       self.service_principal_tenant_id]):
+                raise ValueError("Missing service principal credentials")
+            
+            jdbc_url += (f"AuthMech=11;"
+                        f"UID={self.service_principal_client_id};"
+                        f"PWD={self.service_principal_client_secret};"
+                        f"TenantId={self.service_principal_tenant_id}")
+        else:
+            # Token authentication (default)
+            if not self.sql_user or not self.sql_password:
+                raise ValueError("Missing SQL credentials for token authentication")
+            
+            jdbc_url += f"AuthMech=3;UID={self.sql_user};PWD={self.sql_password}"
+        
+        return jdbc_url
     
     def get_schemas_str(self) -> str:
         """Get comma-separated schemas string."""
@@ -170,20 +223,56 @@ class DeploymentConfig:
         if not self.databricks_host:
             errors.append("DATABRICKS_HOST not set")
         
-        if not self.databricks_token:
-            errors.append("DATABRICKS_TOKEN not set")
-        
         if not self.http_path:
             errors.append("HTTP_PATH not set")
         
-        if not self.user:
-            errors.append("USER not set")
-        
-        if not self.password:
-            errors.append("PASSWORD not set")
+        # Validate based on authentication method
+        if self.auth_method == 'service_principal':
+            # Service Principal authentication
+            if not self.service_principal_client_id:
+                errors.append("SERVICE_PRINCIPAL_CLIENT_ID not set")
+            if not self.service_principal_client_secret:
+                errors.append("SERVICE_PRINCIPAL_CLIENT_SECRET not set")
+            if not self.service_principal_tenant_id:
+                errors.append("SERVICE_PRINCIPAL_TENANT_ID not set")
+            
+            # For DABs, we need either token or service principal for Databricks CLI
+            if not self.databricks_token:
+                errors.append("DATABRICKS_TOKEN not set (required for CLI even with service principal)")
+        else:
+            # Token authentication
+            if not self.databricks_token:
+                errors.append("DATABRICKS_TOKEN not set")
+            if not self.sql_user:
+                errors.append("SQL_USER not set")
+            if not self.sql_password:
+                errors.append("SQL_PASSWORD not set")
         
         if errors:
             raise ValueError(f"Missing required credentials:\n" + "\n".join(f"  - {e}" for e in errors))
         
         return True
+    
+    def get_databricks_config(self) -> Dict[str, str]:
+        """Get Databricks CLI configuration based on auth method.
+        
+        Returns:
+            Dictionary of configuration environment variables
+        """
+        config = {
+            'DATABRICKS_HOST': self.databricks_host,
+        }
+        
+        if self.auth_method == 'service_principal':
+            config['DATABRICKS_AUTH_TYPE'] = 'azure-cli'
+            # Note: Service principal auth for CLI typically requires az login first
+            # or we can set client ID and secret for direct auth
+            if self.service_principal_client_id and self.service_principal_client_secret:
+                config['ARM_CLIENT_ID'] = self.service_principal_client_id
+                config['ARM_CLIENT_SECRET'] = self.service_principal_client_secret
+                config['ARM_TENANT_ID'] = self.service_principal_tenant_id
+        else:
+            config['DATABRICKS_TOKEN'] = self.databricks_token
+        
+        return config
 

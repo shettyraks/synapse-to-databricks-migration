@@ -18,7 +18,7 @@ class DatabricksClient:
         """
         self.config = deployment_config
         self.host = deployment_config.databricks_host
-        self.token = deployment_config.databricks_token
+        self.auth_method = deployment_config.auth_method
         
     def _run_cli_command(self, command: List[str], capture_output: bool = True) -> subprocess.CompletedProcess:
         """Run a Databricks CLI command.
@@ -32,7 +32,25 @@ class DatabricksClient:
         """
         env = os.environ.copy()
         env['DATABRICKS_HOST'] = self.host
-        env['DATABRICKS_TOKEN'] = self.token
+        
+        # Set authentication based on method
+        if self.auth_method == 'service_principal':
+            # Service Principal authentication
+            if self.config.service_principal_client_id:
+                env['ARM_CLIENT_ID'] = self.config.service_principal_client_id
+            if self.config.service_principal_client_secret:
+                env['ARM_CLIENT_SECRET'] = self.config.service_principal_client_secret
+            if self.config.service_principal_tenant_id:
+                env['ARM_TENANT_ID'] = self.config.service_principal_tenant_id
+            
+            # Still provide token for CLI compatibility
+            if self.config.databricks_token:
+                env['DATABRICKS_TOKEN'] = self.config.databricks_token
+            
+            env['DATABRICKS_AUTH_TYPE'] = 'azure-cli'
+        else:
+            # Token authentication (default)
+            env['DATABRICKS_TOKEN'] = self.config.databricks_token
         
         try:
             result = subprocess.run(
