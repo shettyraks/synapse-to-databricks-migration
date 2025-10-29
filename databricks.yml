@@ -6,7 +6,7 @@ bundle:
     # Branch will be set per target
 
 workspace:
-  root_path: /Workspace/rio/synapse-migration
+  root_path: /Workspace/${var.customer}/synapse-migration
 
 variables:
   customer:
@@ -25,6 +25,8 @@ include:
 
 targets:
   dev:
+    workspace:
+      root_path: /Workspace/${var.customer}/synapse-migration
     git:
       branch: develop
     variables:
@@ -34,6 +36,8 @@ targets:
       schema_prefix: "dev_"
       
   sit:
+    workspace:
+      root_path: /Workspace/${var.customer}/synapse-migration
     git:
       branch: release/sit
     variables:
@@ -43,6 +47,8 @@ targets:
       schema_prefix: "sit_"
       
   uat:
+    workspace:
+      root_path: /Workspace/${var.customer}/synapse-migration
     git:
       branch: release/uat
     variables:
@@ -52,6 +58,8 @@ targets:
       schema_prefix: "uat_"
       
   prod:
+    workspace:
+      root_path: /Workspace/${var.customer}/synapse-migration
     git:
       branch: main
     variables:
