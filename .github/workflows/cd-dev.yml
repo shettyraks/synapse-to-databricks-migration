@@ -43,15 +43,6 @@ jobs:
         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
-    - name: Deploy Databricks Assets
-      run: |
-        echo "Deploying Databricks assets to development environment..."
-        databricks bundle deploy --target dev
-        databricks bundle summary --target dev
-      env:
-        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
-        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
-    
     - name: Install Flyway
       run: |
         echo "Installing Flyway..."
@@ -190,6 +181,20 @@ jobs:
         HTTP_PATH_DEV: /sql/1.0/warehouses/8b5728cafe72b647
         USER_DEV: token
         PASSWORD_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+    
+    - name: Deploy Databricks Assets
+      run: |
+        echo "Loading config values..."
+        eval "$(python3 scripts/read_config.py config/customer_input.yml dev)"
+        export DATABRICKS_HOST="${{ secrets.DATABRICKS_HOST_DEV }}"
+        export DATABRICKS_TOKEN="${{ secrets.DATABRICKS_TOKEN_DEV }}"
+        echo "Deploying Databricks assets to development environment..."
+        echo "Customer: $CUSTOMER, Catalog: $CATALOG"
+        databricks bundle deploy --target dev --var="customer=$CUSTOMER" --var="catalog=$CATALOG"
+        databricks bundle summary --target dev
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
     
     - name: Deployment Complete
       run: |
