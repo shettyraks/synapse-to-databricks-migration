@@ -87,12 +87,25 @@ environments:
 
 ### Environment Variables
 
+#### Token Authentication (Default)
+
 Set these GitHub Secrets for each environment:
 
 - `DATABRICKS_HOST_DEV` - Databricks host URL
 - `DATABRICKS_TOKEN_DEV` - Databricks API token
 - `HTTP_PATH_DEV` - SQL warehouse HTTP path
-- `USER_DEV` - Connection user (usually 'token')
+- `SQL_USER_DEV` - Connection user (usually 'token')
+- `SQL_PASSWORD_DEV` - Same as DATABRICKS_TOKEN_DEV
+
+#### Service Principal Authentication (Alternative)
+
+For Azure-based authentication, set these additional secrets:
+
+- `SERVICE_PRINCIPAL_CLIENT_ID_DEV` - Azure AD client ID
+- `SERVICE_PRINCIPAL_CLIENT_SECRET_DEV` - Azure AD client secret
+- `SERVICE_PRINCIPAL_TENANT_ID_DEV` - Azure AD tenant ID
+
+See [Authentication Guide](docs/AUTHENTICATION.md) for details.
 
 ## Usage
 
