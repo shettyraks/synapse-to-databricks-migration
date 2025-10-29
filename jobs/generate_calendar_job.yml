@@ -1,0 +1,27 @@
+# Calendar Data Generation Job Configuration
+resources:
+  jobs:
+    generate_calendar_job:
+      name: "Generate Calendar Data (2015-2030)"
+      description: "Generates calendar dimension data for fiscal years 2015-2030"
+      tasks:
+        - task_key: "generate_calendar_data"
+          notebook_task:
+            notebook_path: "/Workspace/rio/synapse-migration/src/Inventory/notebooks/generate_calendar_data"
+            base_parameters:
+              catalog: "${var.catalog}"
+              schema: "${var.schema_prefix}inventory"
+          libraries:
+            - notebook:
+                path: "/Workspace/rio/synapse-migration/src/Inventory/notebooks/generate_calendar_data"
+      schedule:
+        quartz_cron_expression: "0 0 1 1 * ?"
+        timezone_id: "UTC"
+        pause_status: "RUNNING"
+      timeout_seconds: 3600
+      max_concurrent_runs: 1
+      format: MULTI_TASK
+      tags:
+        purpose: "data-generation"
+        component: "calendar-dimension"
+
