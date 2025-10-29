@@ -2,7 +2,7 @@
 resources:
   jobs:
     generate_calendar_job:
-      name: "Generate Calendar Data (2015-2030)"
+      name: "${var.customer}_${var.environment}_Generate_Calendar_Data"
       description: "Generates calendar dimension data for fiscal years 2015-2030"
       tasks:
         - task_key: "generate_calendar_data"
@@ -11,6 +11,8 @@ resources:
             base_parameters:
               catalog: "${var.catalog}"
               schema: "${var.schema_prefix}inventory"
+              customer: "${var.customer}"
+              environment: "${var.environment}"
       schedule:
         quartz_cron_expression: "0 0 1 1 * ?"
         timezone_id: "UTC"

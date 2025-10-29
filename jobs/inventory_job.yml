@@ -2,14 +2,17 @@
 resources:
   jobs:
     inventory_etl_job:
-      name: "Inventory ETL Job"
+      name: "${var.customer}_${var.environment}_Inventory_ETL_Job"
+      description: "ETL job for processing inventory data"
       tasks:
         - task_key: "inventory_data_processing"
           notebook_task:
-            notebook_path: "/Workspace/Shared/synapse-migration/src/Inventory/notebooks/inventory_etl"
+            notebook_path: "/Workspace/rio/synapse-migration/src/Inventory/notebooks/inventory_etl"
             base_parameters:
-              catalog: "main"
-              schema: "inventory"
+              catalog: "${var.catalog}"
+              schema: "${var.schema_prefix}inventory"
+              customer: "${var.customer}"
+              environment: "${var.environment}"
       schedule:
         quartz_cron_expression: "0 0 6 * * ?"
         timezone_id: "UTC"
