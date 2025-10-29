@@ -1,0 +1,298 @@
+name: CI - Feature Branch Testing
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'feature/flyway-notebook-python'
+    paths:
+      - 'src/**'
+      - 'modules/**'
+      - 'scripts/**'
+      - '.github/workflows/ci-feature.yml'
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'src/**'
+      - 'modules/**'
+      - 'scripts/**'
+      - '.github/workflows/ci-feature.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black mypy
+      
+      - name: Lint Python code
+        run: |
+          echo "Running flake8..."
+          flake8 modules/ scripts/ --max-line-length=120 --ignore=E501,W503 --exclude=__pycache__
+          echo "✅ Linting passed"
+      
+      - name: Check code formatting
+        run: |
+          echo "Checking code formatting with black..."
+          black --check modules/ scripts/
+          echo "✅ Code formatting check passed"
+      
+      - name: Type checking
+        run: |
+          echo "Running type checks with mypy..."
+          mypy modules/ --ignore-missing-imports --no-strict-optional
+          echo "✅ Type checking passed"
+  
+  validate-notebooks:
+    name: Validate Python Notebooks
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nbval nbconvert
+      
+      - name: Validate Python notebooks
+        run: |
+          echo "Checking for Python notebook files..."
+          find src/Inventory/notebooks -name "*.py" -type f | head -20
+          
+          echo "Checking for any syntax errors in notebooks..."
+          for notebook in src/Inventory/notebooks/*.py; do
+            if [ -f "$notebook" ]; then
+              echo "Validating: $notebook"
+              python -m py_compile "$notebook" || exit 1
+            fi
+          done
+          echo "✅ Python notebooks validation passed"
+      
+      - name: Check notebook imports
+        run: |
+          echo "Checking notebook imports..."
+          python3 << 'EOF'
+          import sys
+          import re
+          
+          notebooks = [
+              'src/Inventory/notebooks/sql_migration_manager.py',
+              'src/Inventory/notebooks/migration_validation.py',
+              'src/Inventory/notebooks/migration_rollback.py'
+          ]
+          
+          errors = []
+          for notebook in notebooks:
+              if notebook:
+                  try:
+                      with open(notebook, 'r') as f:
+                          content = f.read()
+                          # Check for common imports
+                          if 'import json' not in content and '"json"' in content:
+                              errors.append(f"{notebook}: Missing json import")
+                          if 'from datetime import' not in content and 'datetime' in content:
+                              errors.append(f"{notebook}: Missing datetime import")
+                  except FileNotFoundError:
+                      pass
+          
+          if errors:
+              for error in errors:
+                  print(f"WARNING: {error}")
+          else:
+              print("✅ Import checks passed")
+          
+          sys.exit(0 if not errors else 1)
+          EOF
+  
+  test-modules:
+    name: Test Python Modules
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Test module imports
+        run: |
+          echo "Testing module imports..."
+          python3 << 'EOF'
+          import sys
+          sys.path.insert(0, '.')
+          
+          try:
+              from modules.config import ConfigManager, DeploymentConfig
+              print("✅ Config module imports successfully")
+          except ImportError as e:
+              print(f"❌ Failed to import config module: {e}")
+              sys.exit(1)
+          
+          try:
+              from modules.databricks_client import DatabricksClient
+              print("✅ DatabricksClient module imports successfully")
+          except ImportError as e:
+              print(f"❌ Failed to import databricks_client module: {e}")
+              sys.exit(1)
+          
+          try:
+              from modules.flyway_runner import FlywayRunner
+              print("✅ FlywayRunner module imports successfully")
+          except ImportError as e:
+              print(f"❌ Failed to import flyway_runner module: {e}")
+              sys.exit(1)
+          
+          try:
+              from modules.deployment_orchestrator import DeploymentOrchestrator
+              print("✅ DeploymentOrchestrator module imports successfully")
+          except ImportError as e:
+              print(f"❌ Failed to import deployment_orchestrator module: {e}")
+              sys.exit(1)
+          
+          print("\n✅ All module imports successful")
+          sys.exit(0)
+          EOF
+  
+  validate-configuration:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate customer_input.yml
+        run: |
+          echo "Validating customer_input.yml..."
+          python3 << 'EOF'
+          import yaml
+          import sys
+          
+          try:
+              with open('config/customer_input.yml', 'r') as f:
+                  config = yaml.safe_load(f)
+              
+              if 'environments' not in config:
+                  print("❌ Missing 'environments' key in config")
+                  sys.exit(1)
+              
+              required_envs = ['dev', 'sit', 'uat', 'prod']
+              for env in required_envs:
+                  if env not in config['environments']:
+                      print(f"⚠️  Missing environment: {env}")
+                  else:
+                      env_config = config['environments'][env]
+                      print(f"✅ Environment {env}:")
+                      print(f"   Customer: {env_config.get('customer', 'NOT SET')}")
+                      print(f"   Catalog: {env_config.get('catalog', 'NOT SET')}")
+                      print(f"   Flyway Schema: {env_config.get('flyway_schema', 'NOT SET')}")
+                      print(f"   Schemas: {env_config.get('schemas', [])}")
+              
+              print("\n✅ Configuration validation passed")
+              sys.exit(0)
+              
+          except FileNotFoundError:
+              print("❌ config/customer_input.yml not found")
+              sys.exit(1)
+          except Exception as e:
+              print(f"❌ Configuration validation failed: {e}")
+              sys.exit(1)
+          EOF
+      
+      - name: Validate databricks.yml
+        run: |
+          echo "Validating databricks.yml..."
+          python3 << 'EOF'
+          import yaml
+          import sys
+          
+          try:
+              with open('databricks.yml', 'r') as f:
+                  bundle_config = yaml.safe_load(f)
+              
+              if 'targets' not in bundle_config:
+                  print("❌ Missing 'targets' in databricks.yml")
+                  sys.exit(1)
+              
+              required_targets = ['dev', 'sit', 'uat', 'prod']
+              for target in required_targets:
+                  if target not in bundle_config['targets']:
+                      print(f"⚠️  Missing target: {target}")
+                  else:
+                      target_config = bundle_config['targets'][target]
+                      print(f"✅ Target {target}:")
+                      print(f"   Bundle Name: {target_config.get('bundle', {}).get('name', 'NOT SET')}")
+                      print(f"   Branch: {target_config.get('git', {}).get('branch', 'NOT SET')}")
+              
+              print("\n✅ Bundle configuration validation passed")
+              sys.exit(0)
+              
+          except Exception as e:
+              print(f"❌ Bundle configuration validation failed: {e}")
+              sys.exit(1)
+          EOF
+  
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-validate, validate-notebooks, test-modules, validate-configuration]
+    if: always()
+    
+    steps:
+      - name: CI Summary
+        run: |
+          echo "## CI Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All CI checks completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow runs on feature branches and validates:" >> $GITHUB_STEP_SUMMARY
+          echo "- Python code linting and formatting" >> $GITHUB_STEP_SUMMARY
+          echo "- Notebook validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Module imports" >> $GITHUB_STEP_SUMMARY
+          echo "- Configuration files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
