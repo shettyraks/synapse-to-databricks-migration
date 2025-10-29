@@ -12,21 +12,21 @@ environments:
   sit:
     customer: TBD
     catalog: rio_cicd_setup_sit
-    flyway_schema: flyway_sit
+    flyway_schema: pandas_flyway
     schemas:
       - inventory
       - masterdata
   uat:
     customer: TBD
     catalog: rio_cicd_setup_uat
-    flyway_schema: flyway_uat
+    flyway_schema: pandas_flyway
     schemas:
       - inventory
       - masterdata
   prod:
     customer: TBD
     catalog: rio_cicd_setup_prod
-    flyway_schema: flyway_prod
+    flyway_schema: pandas_flyway
     schemas:
       - inventory
       - masterdata
