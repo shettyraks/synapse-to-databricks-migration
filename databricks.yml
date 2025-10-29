@@ -3,7 +3,7 @@ bundle:
   name: synapse-to-databricks-migration
   git:
     origin_url: https://github.com/shettyraks/synapse-to-databricks-migration.git
-    branch: develop
+    # Branch will be set per target
 
 workspace:
   root_path: /Workspace/rio/synapse-migration
@@ -23,24 +23,32 @@ include:
 
 targets:
   dev:
+    git:
+      branch: develop
     variables:
       environment: "dev"
       catalog: "main"
       schema_prefix: "dev_"
       
   sit:
+    git:
+      branch: release/sit
     variables:
       environment: "sit"
       catalog: "main"
       schema_prefix: "sit_"
       
   uat:
+    git:
+      branch: release/uat
     variables:
       environment: "uat"
       catalog: "main"
       schema_prefix: "uat_"
       
   prod:
+    git:
+      branch: main
     variables:
       environment: "prod"
       catalog: "main"
