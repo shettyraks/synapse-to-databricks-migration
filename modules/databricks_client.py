@@ -149,4 +149,30 @@ class DatabricksClient:
             return run_info.get('run_id')
         except (json.JSONDecodeError, KeyError) as e:
             raise RuntimeError(f"Failed to parse run-now response: {e}") from e
+    
+    def run_notebook(self, notebook_path: str, parameters: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
+        """Run a notebook via Databricks API.
+        
+        Args:
+            notebook_path: Path to notebook
+            parameters: Optional notebook parameters
+            
+        Returns:
+            Notebook run results (if available)
+        """
+        # Note: This is a placeholder implementation
+        # In production, you would use:
+        # 1. dbutils.notebook.run() within Databricks notebooks
+        # 2. Databricks REST API for Jobs API 2.0
+        # 3. Databricks CLI for running one-time jobs
+        
+        print(f"Running notebook: {notebook_path}")
+        if parameters:
+            print(f"With parameters: {parameters}")
+        
+        # For now, just log the request
+        # In production, this would make an actual API call
+        print("⚠️ Notebook execution is a placeholder - implement in production")
+        
+        return {"status": "placeholder", "notebook": notebook_path}
 
