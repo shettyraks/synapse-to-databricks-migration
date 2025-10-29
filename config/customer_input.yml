@@ -4,7 +4,8 @@
 environments:
   dev:
     customer: PANDs
-    catalog: main
+    catalog: rio_cicd_setup_dev
+    flyway_schema: pandas_flyway
     schemas:
       - inventory
       - masterdata
