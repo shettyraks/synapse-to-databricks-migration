@@ -1,9 +1,9 @@
 # Databricks Asset Bundle Configuration
 bundle:
-  name: synapse-to-databricks-migration
   git:
     origin_url: https://github.com/shettyraks/synapse-to-databricks-migration.git
     # Branch will be set per target
+    # Note: bundle name is set per target to include customer
 
 workspace:
   root_path: /Workspace/${var.customer}/synapse-migration
@@ -25,6 +25,8 @@ include:
 
 targets:
   dev:
+    bundle:
+      name: synapse-to-databricks-migration-pands-dev
     workspace:
       root_path: /Workspace/${var.customer}/synapse-migration
     git:
@@ -36,6 +38,8 @@ targets:
       schema_prefix: "dev_"
       
   sit:
+    bundle:
+      name: synapse-to-databricks-migration-sit
     workspace:
       root_path: /Workspace/${var.customer}/synapse-migration
     git:
@@ -47,6 +51,8 @@ targets:
       schema_prefix: "sit_"
       
   uat:
+    bundle:
+      name: synapse-to-databricks-migration-uat
     workspace:
       root_path: /Workspace/${var.customer}/synapse-migration
     git:
@@ -58,6 +64,8 @@ targets:
       schema_prefix: "uat_"
       
   prod:
+    bundle:
+      name: synapse-to-databricks-migration-prod
     workspace:
       root_path: /Workspace/${var.customer}/synapse-migration
     git:
