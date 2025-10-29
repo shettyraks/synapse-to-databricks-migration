@@ -9,6 +9,8 @@ workspace:
   root_path: /Workspace/rio/synapse-migration
 
 variables:
+  customer:
+    description: "Customer identifier"
   environment:
     description: "Environment name (dev, sit, uat, prod)"
   catalog:
@@ -26,6 +28,7 @@ targets:
     git:
       branch: develop
     variables:
+      customer: "PANDs"
       environment: "dev"
       catalog: "main"
       schema_prefix: "dev_"
@@ -34,6 +37,7 @@ targets:
     git:
       branch: release/sit
     variables:
+      customer: "CHANGE_ME"
       environment: "sit"
       catalog: "main"
       schema_prefix: "sit_"
@@ -42,6 +46,7 @@ targets:
     git:
       branch: release/uat
     variables:
+      customer: "CHANGE_ME"
       environment: "uat"
       catalog: "main"
       schema_prefix: "uat_"
@@ -50,6 +55,7 @@ targets:
     git:
       branch: main
     variables:
+      customer: "CHANGE_ME"
       environment: "prod"
       catalog: "main"
       schema_prefix: ""
