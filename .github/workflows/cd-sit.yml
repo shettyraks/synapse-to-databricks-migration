@@ -191,7 +191,7 @@ jobs:
         export DATABRICKS_TOKEN="${{ secrets.DATABRICKS_TOKEN_SIT }}"
         echo "Deploying Databricks assets to SIT environment..."
         echo "Customer: $CUSTOMER, Catalog: $CATALOG"
-        databricks bundle deploy --target sit --var="customer=$CUSTOMER" --var="catalog=$CATALOG"
+        databricks bundle deploy --target sit --var="customer=$CUSTOMER" --var="catalog=$CATALOG" --force
         databricks bundle summary --target sit
       env:
         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_SIT }}
