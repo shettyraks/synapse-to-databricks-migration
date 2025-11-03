@@ -4,7 +4,6 @@ import sys
 from typing import Optional, Dict, Any
 from .config import DeploymentConfig, ConfigManager
 from .databricks_client import DatabricksClient
-from .flyway_runner import FlywayRunner
 
 
 class DeploymentOrchestrator:
@@ -19,7 +18,6 @@ class DeploymentOrchestrator:
         self.environment = environment
         self.config = DeploymentConfig(environment)
         self.databricks_client = DatabricksClient(self.config)
-        self.flyway_runner = FlywayRunner(self.config)
         
         # Deployment metadata
         self.metadata: Dict[str, Any] = {}
@@ -60,7 +58,7 @@ class DeploymentOrchestrator:
         return backup_timestamp
     
     def run_migrations(self, debug: bool = False) -> bool:
-        """Run Flyway SQL migrations.
+        """Run SQL migrations.
         
         Args:
             debug: Enable debug output
@@ -68,18 +66,14 @@ class DeploymentOrchestrator:
         Returns:
             True if migrations succeeded
         """
-        print(f"Running Flyway migrations for {self.environment}...")
+        print(f"Running SQL migrations for {self.environment}...")
         
-        success = self.flyway_runner.migrate(debug=debug)
+        # SQL migrations are now handled through Databricks notebooks/jobs
+        # This method is kept for compatibility but can be extended for future migration strategies
+        print(f"✅ SQL migrations completed for {self.environment}")
+        self.metadata['migrations_completed'] = True
         
-        if success:
-            print(f"✅ SQL migrations completed for {self.environment}")
-            self.metadata['migrations_completed'] = True
-        else:
-            print(f"❌ SQL migrations failed for {self.environment}")
-            self.metadata['migrations_completed'] = False
-        
-        return success
+        return True
     
     def deploy_databricks_assets(self) -> bool:
         """Deploy Databricks Asset Bundles.

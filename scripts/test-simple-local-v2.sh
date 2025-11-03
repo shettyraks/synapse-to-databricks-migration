@@ -19,7 +19,7 @@ echo "=================================="
 test_project_structure() {
     echo -e "${YELLOW}Testing project structure...${NC}"
     
-    required_dirs=("src" "flyway" "scripts")
+    required_dirs=("src" "scripts")
     missing_dirs=()
     
     for dir in "${required_dirs[@]}"; do
@@ -175,30 +175,6 @@ test_environment_config() {
     fi
 }
 
-# Test Flyway configuration
-test_flyway_config() {
-    echo -e "${YELLOW}Testing Flyway configuration...${NC}"
-    
-    if [ -f "flyway/conf/flyway.conf" ]; then
-        echo -e "${GREEN}✓ flyway.conf exists${NC}"
-        
-        # Check for required Flyway settings
-        if grep -q "flyway.url=" flyway/conf/flyway.conf; then
-            echo -e "${GREEN}✓ Flyway URL configured${NC}"
-        else
-            echo -e "${YELLOW}⚠ Flyway URL not configured${NC}"
-        fi
-        
-        if grep -q "flyway.locations=" flyway/conf/flyway.conf; then
-            echo -e "${GREEN}✓ Flyway locations configured${NC}"
-        else
-            echo -e "${YELLOW}⚠ Flyway locations not configured${NC}"
-        fi
-    else
-        echo -e "${YELLOW}⚠ flyway.conf not found${NC}"
-    fi
-}
-
 # Test deployment script
 test_deployment_script() {
     echo -e "${YELLOW}Testing deployment script...${NC}"
@@ -234,9 +210,6 @@ main() {
     test_environment_config
     echo ""
     
-    test_flyway_config
-    echo ""
-    
     test_deployment_script
     echo ""
     
@@ -247,13 +220,11 @@ main() {
     echo "✓ SQL files syntax checked"
     echo "✓ YAML configurations validated"
     echo "✓ Environment setup verified"
-    echo "✓ Flyway configuration checked"
     echo "✓ Deployment scripts verified"
     echo ""
     echo -e "${YELLOW}Next steps:${NC}"
     echo "1. For full YAML validation: pip install PyYAML"
-    echo "2. For Flyway testing: Install Flyway Spark plugin"
-    echo "3. For Databricks testing: pip install databricks-cli"
+    echo "2. For Databricks testing: pip install databricks-cli"
     echo "4. Configure your Databricks instance in local.env"
 }
 

@@ -6,7 +6,7 @@ This repository contains a complete deployment pipeline for migrating SQL Server
 
 - **Multi-Environment Support**: Deploy to dev, sit, uat, and prod environments
 - **Modular Python Architecture**: System-independent, maintainable modules
-- **Flyway SQL Migrations**: Automated schema deployment with version control
+- **SQL Migrations**: Automated schema deployment via Databricks notebooks
 - **Databricks Asset Bundles**: Deploy notebooks, jobs, and configurations
 - **Automated CI/CD**: GitHub Actions workflows for automated deployments
 - **Comprehensive Validation**: Pre and post-deployment checks
@@ -20,14 +20,13 @@ The deployment system uses a modular Python architecture for maximum flexibility
 
 - **`modules/config.py`** - Configuration management
 - **`modules/databricks_client.py`** - Databricks API interactions
-- **`modules/flyway_runner.py`** - SQL migration management
 - **`modules/deployment_orchestrator.py`** - Deployment orchestration
 
 ### Deployment Flow
 
 1. **Configuration Validation** - Load and validate environment configuration
 2. **Backup Creation** - Create database backups before migration
-3. **SQL Migrations** - Run Flyway migrations to create/update schema
+3. **SQL Migrations** - Run SQL migrations via Databricks notebooks/jobs
 4. **Asset Deployment** - Deploy Databricks notebooks, jobs, and configurations
 5. **Validation** - Verify deployment success
 6. **Smoke Tests** - Run basic functionality tests
@@ -79,7 +78,6 @@ environments:
   dev:
     customer: PANDs
     catalog: rio_cicd_setup_dev
-    flyway_schema: pandas_flyway
     schemas:
       - inventory
       - masterdata
@@ -143,7 +141,6 @@ modules/
 ├── __init__.py
 ├── config.py                 # Configuration management
 ├── databricks_client.py      # Databricks API client
-├── flyway_runner.py          # Flyway migration runner
 └── deployment_orchestrator.py  # Deployment orchestration
 
 scripts/
@@ -160,10 +157,9 @@ deploy.py                     # Main deployment entry point
 
 - Triggers on: Push to `develop` branch
 - Steps:
-  1. Install Flyway and JDBC driver
-  2. Run SQL migrations
-  3. Deploy Databricks assets
-  4. Run validation
+  1. Run SQL migrations via Databricks notebooks
+  2. Deploy Databricks assets
+  3. Run validation
 
 ### Production Deployment (`.github/workflows/cd-prod.yml`)
 
@@ -171,7 +167,7 @@ deploy.py                     # Main deployment entry point
 - Steps:
   1. Create backup
   2. Install dependencies
-  3. Run SQL migrations
+  3. Run SQL migrations via Databricks notebooks
   4. Deploy Databricks assets
   5. Run validation and smoke tests
 

@@ -19,7 +19,7 @@ echo "=================================="
 test_project_structure() {
     echo -e "${YELLOW}Testing project structure...${NC}"
     
-    required_dirs=("src" "flyway" "scripts")
+    required_dirs=("src" "scripts")
     missing_dirs=()
     
     for dir in "${required_dirs[@]}"; do
@@ -217,9 +217,8 @@ main() {
     echo "✓ YAML configurations validated"
     echo "✓ Environment setup verified"
     echo ""
-    echo -e "${YELLOW}Note: For full Flyway/Databricks testing, you'll need:${NC}"
+    echo -e "${YELLOW}Note: For full Databricks testing, you'll need:${NC}"
     echo "- Databricks CLI: pip install databricks-cli"
-    echo "- Flyway Spark plugin (for actual migration testing)"
     echo "- Valid Databricks instance credentials"
 }
 

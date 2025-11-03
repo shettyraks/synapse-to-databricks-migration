@@ -3,7 +3,17 @@ name: Deploy to Production
 on:
   push:
     branches: [ main ]
+    tags:
+      - '*-prod-deploy_now'
+      - '*-prod-deploy-now'
+      - '*_prod_deploy_now'
+      - '*_prod_deploy-now'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Optional tag name (for tag-based deployment)'
+        required: false
+        type: string
 
 env:
   ENVIRONMENT: prod
@@ -14,46 +24,90 @@ jobs:
     environment: production
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag_name || github.ref }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     
+    - name: Install Python Dependencies
+      run: |
+        echo "Installing Python dependencies..."
+        pip install -r requirements.txt
+        echo "✅ Python dependencies installed"
+    
     - name: Install Databricks CLI
-      run: pip install databricks-cli
+      run: |
+        echo "Installing Databricks CLI..."
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        echo "✅ Databricks CLI installed"
     
     - name: Configure Databricks CLI
       run: |
-        echo "${{ secrets.DATABRICKS_HOST_PROD }}" | databricks configure --token
+        echo "Configuring Databricks CLI for production environment..."
       env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_PROD }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+    
+    - name: Load Configuration
+      id: config
+      run: |
+        echo "Loading configuration for prod environment..."
+        eval "$(python3 scripts/read_config.py config/customer_input.yml prod)"
+        echo "CUSTOMER=$CUSTOMER" >> $GITHUB_OUTPUT
+        echo "CATALOG=$CATALOG" >> $GITHUB_OUTPUT
+        echo "SCHEMAS=$SCHEMAS" >> $GITHUB_OUTPUT
+        echo "✅ Configuration loaded"
     
     - name: Create Backup
       run: |
+        echo "Creating backup before production deployment..."
         python scripts/create_backup.py --environment prod
-    
-    - name: Deploy Databricks Assets
-      run: |
-        databricks bundle deploy --target prod
+      env:
+        DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+        DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
     
     - name: Run SQL Migrations
       run: |
-        ./scripts/deploy-sql-migrations.sh prod
+        echo "Running SQL migrations for production environment..."
+        python deploy.py --environment prod
+      env:
+        DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+        DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+        HTTP_PATH_PROD: ${{ secrets.HTTP_PATH_PROD }}
+        SQL_USER_PROD: ${{ secrets.SQL_USER_PROD }}
+        SQL_PASSWORD_PROD: ${{ secrets.SQL_PASSWORD_PROD }}
+    
+    - name: Deploy Databricks Assets
+      run: |
+        echo "Deploying Databricks assets to production environment..."
+        databricks bundle deploy --target prod --var="customer=${{ steps.config.outputs.CUSTOMER }}" --var="catalog=${{ steps.config.outputs.CATALOG }}"
+        databricks bundle summary --target prod
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_PROD }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PROD }}
     
     - name: Validate Deployment
       run: |
+        echo "Validating deployment for production..."
         python scripts/validate_deployment.py --environment prod
+      env:
+        DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+        DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
     
     - name: Run Smoke Tests
       run: |
+        echo "Running smoke tests for production..."
         python scripts/run_smoke_tests.py --environment prod
+      env:
+        DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+        DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
     
-    - name: Notify Production Deployment
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        channel: '#databricks-prod'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow
+    - name: Deployment Summary
+      run: |
+        echo "✅ Production deployment completed successfully"
+        echo "Tag/Branch: ${{ github.ref }}"

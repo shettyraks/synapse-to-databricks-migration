@@ -1,6 +1,6 @@
 # Local Testing Guide
 
-This guide explains how to test Flyway and Databricks configurations locally before deploying to production environments.
+This guide explains how to test SQL migrations and Databricks configurations locally before deploying to production environments.
 
 ## Prerequisites
 
@@ -13,9 +13,6 @@ This guide explains how to test Flyway and Databricks configurations locally bef
 ```bash
 # Install Databricks CLI
 pip install databricks-cli
-
-# Install Flyway
-# Download from: https://flywaydb.org/download/
 ```
 
 ## Quick Start
@@ -34,14 +31,14 @@ This script will:
 
 ### 2. Individual Testing
 
-#### Test Flyway Migrations
+#### Test SQL Migrations
 ```bash
 # First, configure your environment
 cp local.env.template local.env
 # Edit local.env with your Databricks instance details
 
-# Run Flyway tests
-./scripts/test-flyway-local.sh
+# SQL migrations are handled through Databricks notebooks/jobs
+# Test by running the migration notebooks directly
 ```
 
 #### Test Databricks Bundle
@@ -75,12 +72,6 @@ Main testing script that runs all checks:
 - Job configuration validation
 - Individual script execution
 
-### `test-flyway-local.sh`
-Tests Flyway migrations:
-- Creates domain-specific configurations
-- Validates SQL syntax
-- Tests Flyway info and validate commands
-- Reports success/failure for each domain
 
 ### `test-databricks-local.sh`
 Tests Databricks Asset Bundle:
@@ -138,7 +129,7 @@ After successful local testing:
 
 1. **Deploy to Development**
    ```bash
-   ./scripts/deploy-sql-migrations.sh dev
+   python deploy.py --environment dev
    ```
 
 2. **Deploy Databricks Bundle**

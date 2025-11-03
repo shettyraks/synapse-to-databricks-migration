@@ -1,4 +1,4 @@
--- Insert sample calendar data for fiscal year 2024 (moved out of Flyway locations)
+-- Insert sample calendar data for fiscal year 2024
 INSERT INTO inventory.calendar_dim VALUES
 -- January 2024 (4 weeks)
 ('2024-01-01', 2024, 1, 1, 1, '2024-01', '2024-01-01', '2024-01-28', false, false, false, 1, 1, 'Monday', 'January', 'Q1'),

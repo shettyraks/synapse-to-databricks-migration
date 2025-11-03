@@ -1,4 +1,4 @@
--- Insert sample inventory transaction data (moved out of Flyway locations)
+-- Insert sample inventory transaction data
 INSERT INTO inventory.inventory_transaction VALUES
 ('TXN-001', 'INV-2024-001', '123456789012', 'SKU-001', 'Sample Product 1', 100, 25.99, 2599.00, '2024-01-15 09:00:00', 'INBOUND', '2024-01-15 09:00:00', '2024-01-15 09:00:00', 'system', 'system'),
 ('TXN-002', 'INV-2024-001', '123456789013', 'SKU-002', 'Sample Product 2', 50, 15.50, 775.00, '2024-01-15 09:30:00', 'INBOUND', '2024-01-15 09:30:00', '2024-01-15 09:30:00', 'system', 'system'),

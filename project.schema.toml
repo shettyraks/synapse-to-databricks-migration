@@ -10,7 +10,6 @@ license = "MIT"
 
 [project.dependencies]
 databricks-cli = ">=0.273.0"
-flyway = ">=11.14.1"
 pytest = ">=7.0.0"
 black = ">=23.0.0"
 flake8 = ">=6.0.0"

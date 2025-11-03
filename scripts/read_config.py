@@ -20,13 +20,11 @@ def main() -> None:
     customer = env.get("customer", "")
     catalog = env.get("catalog", "")
     schemas = env.get("schemas", [])
-    flyway_schema = env.get("flyway_schema", "")
 
     # Print shell-parseable exports
     print(f"export CUSTOMER='{customer}'")
     print(f"export CATALOG='{catalog}'")
     print(f"export SCHEMAS='{','.join(schemas)}'")
-    print(f"export FLYWAY_SCHEMA='{flyway_schema}'")
 
 
 if __name__ == "__main__":

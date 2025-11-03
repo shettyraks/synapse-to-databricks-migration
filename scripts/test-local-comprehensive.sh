@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Comprehensive Local Testing Script
-# Tests both Flyway and Databricks configurations locally
+# Tests SQL migrations and Databricks configurations locally
 
 set -e
 
@@ -38,13 +38,6 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check if Flyway is installed
-    if command -v flyway &> /dev/null; then
-        echo -e "${GREEN}✓ Flyway is installed${NC}"
-    else
-        echo -e "${YELLOW}⚠ Flyway is not installed. Some Flyway tests may be skipped.${NC}"
-    fi
-    
     # Check if Databricks CLI is installed
     if command -v databricks &> /dev/null; then
         echo -e "${GREEN}✓ Databricks CLI is installed${NC}"
@@ -58,7 +51,7 @@ check_prerequisites() {
 test_project_structure() {
     echo -e "${YELLOW}Testing project structure...${NC}"
     
-    required_dirs=("src" "flyway" "scripts")
+    required_dirs=("src" "scripts")
     missing_dirs=()
     
     for dir in "${required_dirs[@]}"; do
@@ -155,19 +148,6 @@ test_job_configurations() {
 run_test_scripts() {
     echo -e "${YELLOW}Running individual test scripts...${NC}"
     
-    # Test Flyway
-    if [ -f "scripts/test-flyway-local.sh" ]; then
-        echo "Running Flyway tests..."
-        chmod +x scripts/test-flyway-local.sh
-        if ./scripts/test-flyway-local.sh; then
-            echo -e "${GREEN}✓ Flyway tests passed${NC}"
-        else
-            echo -e "${RED}✗ Flyway tests failed${NC}"
-        fi
-    else
-        echo -e "${YELLOW}⚠ Flyway test script not found${NC}"
-    fi
-    
     # Test Databricks Bundle
     if [ -f "scripts/test-databricks-local.sh" ]; then
         echo "Running Databricks Bundle tests..."
@@ -203,8 +183,8 @@ main() {
     echo ""
     echo -e "${BLUE}Next steps:${NC}"
     echo "1. Copy local.env.template to local.env and configure your Databricks instance"
-    echo "2. Run: ./scripts/test-flyway-local.sh"
-    echo "3. Run: ./scripts/test-databricks-local.sh"
+    echo "2. Run: ./scripts/test-databricks-local.sh"
+    echo "3. Test SQL migrations via Databricks notebooks"
 }
 
 # Run main function

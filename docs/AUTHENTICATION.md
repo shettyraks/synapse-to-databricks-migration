@@ -15,7 +15,7 @@ Token authentication uses a Databricks personal access token or workspace token.
 
 ### Required Environment Variables
 
-For **SQL Migrations (Flyway)**:
+For **SQL Migrations**:
 ```bash
 DATABRICKS_HOST_DEV=adb-xxx.xx.azuredatabricks.net
 HTTP_PATH_DEV=/sql/1.0/warehouses/xxx
@@ -36,7 +36,7 @@ Service Principal authentication uses Azure AD service principal credentials.
 
 ### Required Environment Variables
 
-For **SQL Migrations (Flyway)**:
+For **SQL Migrations**:
 ```bash
 DATABRICKS_HOST_DEV=adb-xxx.xx.azuredatabricks.net
 HTTP_PATH_DEV=/sql/1.0/warehouses/xxx

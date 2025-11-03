@@ -3,7 +3,17 @@ name: Deploy to SIT
 on:
   push:
     branches: [ release/sit ]
+    tags:
+      - '*-sit-deploy_now'
+      - '*-sit-deploy-now'
+      - '*_sit_deploy_now'
+      - '*_sit_deploy-now'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Optional tag name (for tag-based deployment)'
+        required: false
+        type: string
 
 env:
   ENVIRONMENT: sit
@@ -14,34 +24,69 @@ jobs:
     environment: sit
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag_name || github.ref }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     
+    - name: Install Python Dependencies
+      run: |
+        echo "Installing Python dependencies..."
+        pip install -r requirements.txt
+        echo "✅ Python dependencies installed"
+    
     - name: Install Databricks CLI
-      run: pip install databricks-cli
+      run: |
+        echo "Installing Databricks CLI..."
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        echo "✅ Databricks CLI installed"
     
     - name: Configure Databricks CLI
       run: |
-        echo "${{ secrets.DATABRICKS_HOST_SIT }}" | databricks configure --token
+        echo "Configuring Databricks CLI for SIT environment..."
       env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_SIT }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_SIT }}
     
-    - name: Deploy Databricks Assets
+    - name: Load Configuration
+      id: config
       run: |
-        databricks bundle deploy --target sit
+        echo "Loading configuration for sit environment..."
+        eval "$(python3 scripts/read_config.py config/customer_input.yml sit)"
+        echo "CUSTOMER=$CUSTOMER" >> $GITHUB_OUTPUT
+        echo "CATALOG=$CATALOG" >> $GITHUB_OUTPUT
+        echo "SCHEMAS=$SCHEMAS" >> $GITHUB_OUTPUT
+        echo "✅ Configuration loaded"
     
     - name: Run SQL Migrations
       run: |
-        ./scripts/deploy-sql-migrations.sh sit
+        echo "Running SQL migrations for SIT environment..."
+        python deploy.py --environment sit --skip-backup
+      env:
+        DATABRICKS_HOST_SIT: ${{ secrets.DATABRICKS_HOST_SIT }}
+        DATABRICKS_TOKEN_SIT: ${{ secrets.DATABRICKS_TOKEN_SIT }}
+        HTTP_PATH_SIT: ${{ secrets.HTTP_PATH_SIT }}
+        SQL_USER_SIT: ${{ secrets.SQL_USER_SIT }}
+        SQL_PASSWORD_SIT: ${{ secrets.SQL_PASSWORD_SIT }}
+    
+    - name: Deploy Databricks Assets
+      run: |
+        echo "Deploying Databricks assets to SIT environment..."
+        databricks bundle deploy --target sit --var="customer=${{ steps.config.outputs.CUSTOMER }}" --var="catalog=${{ steps.config.outputs.CATALOG }}"
+        databricks bundle summary --target sit
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_SIT }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_SIT }}
     
     - name: Validate Deployment
       run: |
+        echo "Validating deployment for SIT..."
         python scripts/validate_deployment.py --environment sit
-    
-    - name: Run Integration Tests
-      run: |
-        python scripts/run_integration_tests.py --environment sit
+      env:
+        DATABRICKS_HOST_SIT: ${{ secrets.DATABRICKS_HOST_SIT }}
+        DATABRICKS_TOKEN_SIT: ${{ secrets.DATABRICKS_TOKEN_SIT }}

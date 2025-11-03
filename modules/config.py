@@ -12,7 +12,6 @@ class EnvironmentConfig:
     """Configuration for a single environment."""
     customer: str
     catalog: str
-    flyway_schema: str
     schemas: List[str]
     
     @classmethod
@@ -21,7 +20,6 @@ class EnvironmentConfig:
         return cls(
             customer=data.get('customer', ''),
             catalog=data.get('catalog', ''),
-            flyway_schema=data.get('flyway_schema', ''),
             schemas=data.get('schemas', [])
         )
 
@@ -104,9 +102,6 @@ class ConfigManager:
             if not env_config.catalog:
                 errors.append(f"Environment '{env_name}' missing catalog")
             
-            if not env_config.flyway_schema:
-                errors.append(f"Environment '{env_name}' missing flyway_schema")
-            
             if not env_config.schemas:
                 errors.append(f"Environment '{env_name}' missing schemas")
         
@@ -141,15 +136,10 @@ class DeploymentConfig:
         # Determine authentication method
         self.auth_method = self._determine_auth_method()
         
-        # Load Flyway credentials
+        # Load SQL connection credentials (can be token or service principal)
         self.http_path = os.environ.get(f'HTTP_PATH_{environment.upper()}')
-        
-        # SQL connection credentials (can be token or service principal)
         self.sql_user = os.environ.get(f'SQL_USER_{environment.upper()}')
         self.sql_password = os.environ.get(f'SQL_PASSWORD_{environment.upper()}')
-        
-        # Load Flyway configuration
-        self.flyway_locations = os.environ.get('FLYWAY_LOCATIONS', 'filesystem:src/Inventory/sql_deployment')
     
     def _determine_auth_method(self) -> str:
         """Determine which authentication method to use.
@@ -171,7 +161,7 @@ class DeploymentConfig:
             return 'token'  # Default to token
     
     def get_jdbc_url(self) -> str:
-        """Get JDBC URL for Flyway with support for both token and service principal auth.
+        """Get JDBC URL with support for both token and service principal auth.
         
         Returns:
             JDBC URL string

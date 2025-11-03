@@ -75,8 +75,6 @@ test_script_permissions() {
     
     scripts=(
         "scripts/test-simple-local-v2.sh"
-        "scripts/deploy-sql-migrations.sh"
-        "scripts/test-flyway-local.sh"
         "scripts/test-databricks-local.sh"
     )
     

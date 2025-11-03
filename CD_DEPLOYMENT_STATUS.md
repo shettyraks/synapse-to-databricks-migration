@@ -25,8 +25,8 @@
 - ✅ Deploy job configurations and notebooks
 
 ### **4. SQL Migrations**
-- ✅ Run: `./scripts/deploy-sql-migrations.sh dev`
-- ✅ Deploy SQL migrations to `dev_inventory` schema
+- ✅ Run SQL migrations via Databricks notebooks/jobs
+- ✅ Deploy SQL migrations to schemas
 - ✅ Process all domains: Inventory, MasterData, Rail, Shipping, SmartAlert
 
 ### **5. Completion**
@@ -59,9 +59,9 @@ If deployment fails, you may need to configure:
 - Network connectivity issues
 
 ### **3. SQL Migration Issues**
-- Flyway configuration problems
 - Database connection issues
 - SQL syntax errors
+- Notebook execution failures
 
 ## 📊 **Expected Results**
 

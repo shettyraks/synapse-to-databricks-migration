@@ -18,13 +18,7 @@ The deployment system uses a modular approach for system independence and mainta
    - Manages bundle deployments
    - Handles job operations (list, get, run)
 
-3. **`flyway_runner.py`** - Flyway Migration Runner
-   - Downloads Flyway and JDBC driver if needed
-   - Creates Flyway configuration dynamically
-   - Runs SQL migrations
-   - Validates migration state
-
-4. **`deployment_orchestrator.py`** - Deployment Orchestration
+3. **`deployment_orchestrator.py`** - Deployment Orchestration
    - Manages the complete deployment lifecycle
    - Coordinates backup, migrations, asset deployment, validation, and smoke tests
    - Provides flexible deployment options
