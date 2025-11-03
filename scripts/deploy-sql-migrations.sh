@@ -5,6 +5,7 @@
 # Trigger workflow run
 # Deploy latest configuration
 # Test simplified Flyway configuration
+# Updated: Dummy change for testing
 
 set -euo pipefail
 DEBUG=${DEBUG:-0}
