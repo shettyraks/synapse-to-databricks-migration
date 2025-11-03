@@ -3,17 +3,7 @@ name: Deploy to SIT
 on:
   push:
     branches: [ sit, release/sit ]
-    tags:
-      - '*-sit-deploy_now'
-      - '*-sit-deploy-now'
-      - '*_sit_deploy_now'
-      - '*_sit_deploy-now'
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Optional tag name (for tag-based deployment)'
-        required: false
-        type: string
 
 env:
   ENVIRONMENT: sit
@@ -26,8 +16,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.inputs.tag_name || github.ref }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -212,4 +200,3 @@ jobs:
     - name: Deployment Complete
       run: |
         echo "✅ Deployment to SIT environment completed successfully"
-        echo "Tag/Branch: ${{ github.ref }}"
