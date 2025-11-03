@@ -1,0 +1,249 @@
+name: Tag-Based Deployment
+
+on:
+  push:
+    tags:
+      - '*-*-deploy_now'
+      - '*-*-deploy-now'
+      - '*_*_deploy_now'
+      - '*_*_deploy-now'
+      - '*-deploy_now'
+      - '*-deploy-now'
+      - '*_deploy_now'
+      - '*_deploy-now'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name to deploy (must end with -deploy_now or contain environment)'
+        required: true
+        type: string
+        default: 'v1.0.0-dev-deploy_now'
+      environment:
+        description: 'Environment to deploy to (auto = extract from tag)'
+        required: false
+        type: choice
+        options:
+          - auto
+          - dev
+          - sit
+          - uat
+          - prod
+        default: auto
+
+jobs:
+  determine-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      tag_name: ${{ steps.set-env.outputs.tag_name }}
+    steps:
+      - name: Determine environment from tag
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+            MANUAL_ENV="${{ github.event.inputs.environment }}"
+            
+            if [ "$MANUAL_ENV" != "auto" ] && [ -n "$MANUAL_ENV" ]; then
+              ENVIRONMENT="$MANUAL_ENV"
+            else
+              # Extract environment from tag name (supports multiple formats)
+              if echo "$TAG_NAME" | grep -qiE '-(dev|sit|uat|prod)-deploy'; then
+                ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '-(dev|sit|uat|prod)-' | cut -d- -f2 | tr '[:upper:]' '[:lower:]')
+              elif echo "$TAG_NAME" | grep -qiE '_(dev|sit|uat|prod)_deploy'; then
+                ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '_(dev|sit|uat|prod)_' | cut -d_ -f2 | tr '[:upper:]' '[:lower:]')
+              elif echo "$TAG_NAME" | grep -qiE '(^|[_-])(dev|sit|uat|prod)([_-]|$)'; then
+                ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '(^|[_-])(dev|sit|uat|prod)([_-]|$)' | grep -oiE '(dev|sit|uat|prod)' | head -1 | tr '[:upper:]' '[:lower:]')
+              else
+                echo "❌ Cannot determine environment from tag: $TAG_NAME"
+                echo "Tag format examples:"
+                echo "  - v1.0.0-dev-deploy_now"
+                echo "  - v1.0.0-sit-deploy_now"
+                echo "  - release-uat-deploy_now"
+                echo "  - prod-deploy_now"
+                exit 1
+              fi
+            fi
+          else
+            # Push event - extract from tag
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            
+            if echo "$TAG_NAME" | grep -qiE '-(dev|sit|uat|prod)-deploy'; then
+              ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '-(dev|sit|uat|prod)-' | cut -d- -f2 | tr '[:upper:]' '[:lower:]')
+            elif echo "$TAG_NAME" | grep -qiE '_(dev|sit|uat|prod)_deploy'; then
+              ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '_(dev|sit|uat|prod)_' | cut -d_ -f2 | tr '[:upper:]' '[:lower:]')
+            elif echo "$TAG_NAME" | grep -qiE '(^|[_-])(dev|sit|uat|prod)([_-]|$)'; then
+              ENVIRONMENT=$(echo "$TAG_NAME" | grep -oiE '(^|[_-])(dev|sit|uat|prod)([_-]|$)' | grep -oiE '(dev|sit|uat|prod)' | head -1 | tr '[:upper:]' '[:lower:]')
+            else
+              echo "❌ Cannot determine environment from tag: $TAG_NAME"
+              exit 1
+            fi
+          fi
+          
+          echo "Tag: $TAG_NAME"
+          echo "Environment: $ENVIRONMENT"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # Validate environment
+          if [[ ! "$ENVIRONMENT" =~ ^(dev|sit|uat|prod)$ ]]; then
+            echo "❌ Invalid environment: $ENVIRONMENT (must be dev, sit, uat, or prod)"
+            exit 1
+          fi
+
+  deploy:
+    needs: determine-environment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    env:
+      ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+      TAG_NAME: ${{ needs.determine-environment.outputs.tag_name }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.determine-environment.outputs.tag_name }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      
+      - name: Install Python Dependencies
+        run: |
+          echo "Installing Python dependencies..."
+          pip install -r requirements.txt
+          echo "✅ Python dependencies installed"
+      
+      - name: Install Databricks CLI
+        run: |
+          echo "Installing Databricks CLI..."
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          echo "✅ Databricks CLI installed"
+      
+      - name: Set Dynamic Environment Variables
+        run: |
+          ENV_UPPER=$(echo "${{ env.ENVIRONMENT }}" | tr '[:lower:]' '[:upper:]')
+          echo "ENV_UPPER=$ENV_UPPER" >> $GITHUB_ENV
+          echo "Setting environment variables for ${{ env.ENVIRONMENT }} ($ENV_UPPER)"
+      
+      - name: Configure Databricks CLI
+        run: |
+          echo "Configuring Databricks CLI for ${{ env.ENVIRONMENT }} environment..."
+          echo "✅ Databricks CLI configured"
+      
+      - name: Load Configuration
+        id: config
+        run: |
+          echo "Loading configuration for ${{ env.ENVIRONMENT }}..."
+          eval "$(python3 scripts/read_config.py config/customer_input.yml ${{ env.ENVIRONMENT }})"
+          echo "CUSTOMER=$CUSTOMER" >> $GITHUB_OUTPUT
+          echo "CATALOG=$CATALOG" >> $GITHUB_OUTPUT
+          echo "SCHEMAS=$SCHEMAS" >> $GITHUB_OUTPUT
+          echo "✅ Configuration loaded: Customer=$CUSTOMER, Catalog=$CATALOG"
+      
+      - name: Run SQL Migrations (Non-Production)
+        if: env.ENVIRONMENT != 'prod'
+        run: |
+          echo "Running SQL migrations for ${{ env.ENVIRONMENT }} environment..."
+          python deploy.py --environment ${{ env.ENVIRONMENT }} --skip-backup
+        env:
+          # Provide all environment secrets - script will use the correct ones based on ENVIRONMENT
+          DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_TOKEN_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+          HTTP_PATH_DEV: ${{ secrets.HTTP_PATH_DEV }}
+          SQL_USER_DEV: ${{ secrets.SQL_USER_DEV }}
+          SQL_PASSWORD_DEV: ${{ secrets.SQL_PASSWORD_DEV }}
+          DATABRICKS_HOST_SIT: ${{ secrets.DATABRICKS_HOST_SIT }}
+          DATABRICKS_TOKEN_SIT: ${{ secrets.DATABRICKS_TOKEN_SIT }}
+          HTTP_PATH_SIT: ${{ secrets.HTTP_PATH_SIT }}
+          SQL_USER_SIT: ${{ secrets.SQL_USER_SIT }}
+          SQL_PASSWORD_SIT: ${{ secrets.SQL_PASSWORD_SIT }}
+          DATABRICKS_HOST_UAT: ${{ secrets.DATABRICKS_HOST_UAT }}
+          DATABRICKS_TOKEN_UAT: ${{ secrets.DATABRICKS_TOKEN_UAT }}
+          HTTP_PATH_UAT: ${{ secrets.HTTP_PATH_UAT }}
+          SQL_USER_UAT: ${{ secrets.SQL_USER_UAT }}
+          SQL_PASSWORD_UAT: ${{ secrets.SQL_PASSWORD_UAT }}
+      
+      - name: Create Backup (Production Only)
+        if: env.ENVIRONMENT == 'prod'
+        run: |
+          echo "Creating backup before production deployment..."
+          python scripts/create_backup.py --environment prod
+        env:
+          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+          DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+      
+      - name: Run SQL Migrations (Production)
+        if: env.ENVIRONMENT == 'prod'
+        run: |
+          echo "Running SQL migrations for production environment..."
+          python deploy.py --environment prod
+        env:
+          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+          DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+          HTTP_PATH_PROD: ${{ secrets.HTTP_PATH_PROD }}
+          SQL_USER_PROD: ${{ secrets.SQL_USER_PROD }}
+          SQL_PASSWORD_PROD: ${{ secrets.SQL_PASSWORD_PROD }}
+      
+      - name: Deploy Databricks Assets
+        run: |
+          echo "Deploying Databricks assets to ${{ env.ENVIRONMENT }} environment..."
+          echo "Tag: ${{ env.TAG_NAME }}"
+          echo "Customer: ${{ steps.config.outputs.CUSTOMER }}"
+          echo "Catalog: ${{ steps.config.outputs.CATALOG }}"
+          
+          databricks bundle deploy \
+            --target ${{ env.ENVIRONMENT }} \
+            --var="customer=${{ steps.config.outputs.CUSTOMER }}" \
+            --var="catalog=${{ steps.config.outputs.CATALOG }}"
+          
+          echo "✅ Databricks assets deployed"
+          
+          databricks bundle summary --target ${{ env.ENVIRONMENT }}
+        env:
+          # Provide all environment secrets - CLI will use based on target
+          DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_TOKEN_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+          DATABRICKS_HOST_SIT: ${{ secrets.DATABRICKS_HOST_SIT }}
+          DATABRICKS_TOKEN_SIT: ${{ secrets.DATABRICKS_TOKEN_SIT }}
+          DATABRICKS_HOST_UAT: ${{ secrets.DATABRICKS_HOST_UAT }}
+          DATABRICKS_TOKEN_UAT: ${{ secrets.DATABRICKS_TOKEN_UAT }}
+          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+          DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+      
+      - name: Validate Deployment
+        if: env.ENVIRONMENT == 'prod' || env.ENVIRONMENT == 'uat'
+        run: |
+          echo "Validating deployment for ${{ env.ENVIRONMENT }}..."
+          python scripts/validate_deployment.py --environment ${{ env.ENVIRONMENT }}
+        env:
+          DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_TOKEN_DEV: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+          DATABRICKS_HOST_SIT: ${{ secrets.DATABRICKS_HOST_SIT }}
+          DATABRICKS_TOKEN_SIT: ${{ secrets.DATABRICKS_TOKEN_SIT }}
+          DATABRICKS_HOST_UAT: ${{ secrets.DATABRICKS_HOST_UAT }}
+          DATABRICKS_TOKEN_UAT: ${{ secrets.DATABRICKS_TOKEN_UAT }}
+          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+          DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+      
+      - name: Run Smoke Tests (Production Only)
+        if: env.ENVIRONMENT == 'prod'
+        run: |
+          echo "Running smoke tests for production..."
+          python scripts/run_smoke_tests.py --environment prod
+        env:
+          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
+          DATABRICKS_TOKEN_PROD: ${{ secrets.DATABRICKS_TOKEN_PROD }}
+      
+      - name: Deployment Summary
+        run: |
+          echo "=========================================="
+          echo "✅ Deployment Completed Successfully"
+          echo "=========================================="
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+          echo "Tag: ${{ env.TAG_NAME }}"
+          echo "Customer: ${{ steps.config.outputs.CUSTOMER }}"
+          echo "Catalog: ${{ steps.config.outputs.CATALOG }}"
+          echo "=========================================="
