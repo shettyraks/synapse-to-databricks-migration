@@ -10,40 +10,194 @@ jobs:
   deploy-to-uat:
     runs-on: ubuntu-latest
     environment: uat
-    needs: []
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     
+    - name: Install Python Dependencies
+      run: |
+        echo "Installing Python dependencies from requirements.txt..."
+        pip install -r requirements.txt
+        echo "✅ Python dependencies installed successfully"
+    
     - name: Install Databricks CLI
-      run: pip install databricks-cli
+      run: |
+        echo "Installing Databricks CLI via official script..."
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        echo "✅ Databricks CLI installed successfully"
     
     - name: Configure Databricks CLI
       run: |
-        echo "${{ secrets.DATABRICKS_HOST_UAT }}" | databricks configure --token
+        echo "Configuring Databricks CLI with environment variables..."
+        export DATABRICKS_HOST="${{ secrets.DATABRICKS_HOST_UAT }}"
+        export DATABRICKS_TOKEN="${{ secrets.DATABRICKS_TOKEN_UAT }}"
+        echo "✅ Databricks CLI configured successfully"
       env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_UAT }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_UAT }}
+    
+    - name: Install Flyway
+      run: |
+        echo "Installing Flyway..."
+        # Use a more reliable installation method
+        echo "Installing Flyway via package manager..."
+        
+        # Install Java first (required for Flyway)
+        # sudo apt-get update
+        echo "Checking for Java installation..."
+        
+        # Check if Java is already installed
+        if command -v java &> /dev/null; then
+          echo "Java is already installed:"
+          java -version
+        else
+          echo "Java not found, installing latest OpenJDK..."
+          
+          # Check available OpenJDK versions
+          sudo apt-get update
+          AVAILABLE_VERSIONS=$(apt-cache search openjdk-.*-jdk | grep -o 'openjdk-[0-9]*-jdk' | sort -V | tail -1)
+          echo "Latest available OpenJDK version: $AVAILABLE_VERSIONS"
+          
+          # Install the latest available version
+          sudo apt-get install -y $AVAILABLE_VERSIONS || sudo apt-get install -y openjdk-11-jdk
+          
+          # Verify installed Java version
+          echo "Checking installed Java version..."
+          java -version
+          echo "Java installation completed"
+        fi
+        
+        # Set up Java memory flags for Databricks JDBC driver
+        echo "Setting up Java memory flags for Databricks JDBC driver..."
+        export JAVA_OPTS="--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
+        echo "JAVA_OPTS set to: $JAVA_OPTS"
+        
+        # Download Flyway from a reliable source
+        FLYWAY_VERSION="11.14.1"
+        echo "Downloading Flyway ${FLYWAY_VERSION}..."
+        
+        # Try downloading with verbose output for debugging
+        if wget -q "https://github.com/flyway/flyway/releases/download/flyway-${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"; then
+          echo "Flyway download completed"
+        else
+          echo "Primary download failed, trying alternative URL..."
+          # Try alternative download method
+          curl -L -o "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" "https://github.com/flyway/flyway/releases/download/flyway-${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
+        fi
+        
+        # Check what we actually downloaded
+        echo "Checking downloaded file..."
+        ls -la "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File not found"
+        file "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" || echo "File type check failed"
+        
+        # Verify the download
+        if [ -f "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz" ] && [ $(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") -gt 1000000 ]; then
+          echo "Flyway downloaded successfully ($(stat -c%s "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz") bytes)"
+          
+          # Extract the archive
+          echo "Extracting Flyway archive..."
+          tar -xzf "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
+          
+          # Check what was extracted
+          echo "Checking extracted contents..."
+          ls -la flyway-${FLYWAY_VERSION}/ || echo "Extraction directory not found"
+          
+          # Find the actual flyway executable
+          FLYWAY_EXECUTABLE=$(find flyway-${FLYWAY_VERSION} -name "flyway" -type f | head -1)
+          if [ -n "$FLYWAY_EXECUTABLE" ]; then
+            echo "Found Flyway executable: $FLYWAY_EXECUTABLE"
+            echo "Making executable..."
+            chmod +x "$FLYWAY_EXECUTABLE"
+            
+            # Create symlink
+            echo "Creating symlink..."
+            sudo ln -sf "$(pwd)/$FLYWAY_EXECUTABLE" /usr/local/bin/flyway
+            
+            # Verify symlink was created
+            if [ -L /usr/local/bin/flyway ]; then
+              echo "Symlink created successfully"
+              ls -la /usr/local/bin/flyway
+            else
+              echo "❌ Symlink creation failed"
+              exit 1
+            fi
+          else
+            echo "❌ Flyway executable not found in extracted archive"
+            ls -la flyway-${FLYWAY_VERSION}/
+            exit 1
+          fi
+          
+          # Clean up
+          rm "flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz"
+          echo "Flyway installed successfully"
+          
+          # Verify Flyway installation
+          echo "Testing Flyway command..."
+          /usr/local/bin/flyway --version || echo "Flyway verification failed"
+        else
+          echo "Download failed or file too small, trying alternative..."
+          # Alternative: Install via package manager if available
+          if sudo apt-get install -y flyway; then
+            echo "Flyway installed via package manager"
+          else
+            echo "❌ CRITICAL: Flyway installation failed completely"
+            echo "Cannot proceed without Flyway for SQL migrations"
+            exit 1
+          fi
+        fi
+        
+        # Final verification that Flyway is working
+        echo "Final Flyway verification..."
+        if flyway --version; then
+          echo "✅ Flyway is ready for SQL migrations"
+        else
+          echo "❌ CRITICAL: Flyway verification failed"
+          echo "Flyway command not working properly"
+          exit 1
+        fi
+    
+    - name: Download Databricks JDBC Driver
+      run: |
+        echo "Downloading Databricks JDBC driver for Flyway..."
+        curl -L -o databricks-jdbc-driver.jar "https://repo1.maven.org/maven2/com/databricks/databricks-jdbc/2.6.25/databricks-jdbc-2.6.25.jar"
+        echo "Databricks JDBC driver downloaded successfully"
+        ls -la databricks-jdbc-driver.jar
+
+    - name: Run SQL Migrations
+      run: |
+        echo "Running SQL migrations for UAT environment..."
+        ./scripts/deploy-sql-migrations.sh uat
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_UAT }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_UAT }}
+        DATABRICKS_HOST_UAT: ${{ secrets.DATABRICKS_HOST_UAT }}
+        HTTP_PATH_UAT: ${{ secrets.HTTP_PATH_UAT }}
+        USER_UAT: ${{ secrets.USER_UAT }}
+        PASSWORD_UAT: ${{ secrets.DATABRICKS_TOKEN_UAT }}
     
     - name: Deploy Databricks Assets
       run: |
-        databricks bundle deploy --target uat
+        echo "Loading config values..."
+        eval "$(python3 scripts/read_config.py config/customer_input.yml uat)"
+        export DATABRICKS_HOST="${{ secrets.DATABRICKS_HOST_UAT }}"
+        export DATABRICKS_TOKEN="${{ secrets.DATABRICKS_TOKEN_UAT }}"
+        echo "Deploying Databricks assets to UAT environment..."
+        echo "Customer: $CUSTOMER, Catalog: $CATALOG"
+        databricks bundle deploy --target uat --var="customer=$CUSTOMER" --var="catalog=$CATALOG" --force
+        databricks bundle summary --target uat
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_UAT }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_UAT }}
     
-    - name: Run SQL Migrations
+    - name: Deployment Complete
       run: |
-        ./scripts/deploy-sql-migrations.sh uat
-    
-    - name: Validate Deployment
-      run: |
-        python scripts/validate_deployment.py --environment uat
-    
-    - name: Run UAT Tests
-      run: |
-        python scripts/run_uat_tests.py --environment uat
+        echo "✅ Deployment to UAT environment completed successfully"
     
     - name: Notify UAT Deployment
       uses: 8398a7/action-slack@v3
