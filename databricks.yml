@@ -28,7 +28,7 @@ targets:
     bundle:
       name: synapse-to-databricks-migration-pands-dev
     workspace:
-      root_path: /Workspace/${var.customer}/{var.environment}/synapse-migration
+      root_path: /Workspace/${var.customer}/develop/synapse-migration
     git:
       branch: develop
     variables:
@@ -41,7 +41,7 @@ targets:
     bundle:
       name: synapse-to-databricks-migration-sit
     workspace:
-      root_path:  /Workspace/${var.customer}/{var.environment}/synapse-migration
+      root_path:  /Workspace/${var.customer}/sit/synapse-migration
     git:
       branch: release/sit
     variables:
@@ -54,7 +54,7 @@ targets:
     bundle:
       name: synapse-to-databricks-migration-uat
     workspace:
-      root_path:  /Workspace/${var.customer}/{var.environment}/synapse-migration
+      root_path:  /Workspace/${var.customer}/uat/synapse-migration
     git:
       branch: release/uat
     variables:
@@ -67,7 +67,7 @@ targets:
     bundle:
       name: synapse-to-databricks-migration-prod
     workspace:
-      root_path:  /Workspace/${var.customer}/{var.environment}/synapse-migration
+      root_path:  /Workspace/${var.customer}/prod/synapse-migration
     git:
       branch: main
     variables:
